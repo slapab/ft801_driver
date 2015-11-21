@@ -30,3 +30,8 @@
 
 # Debug files
 *.dSYM/
+
+
+# keil files:
+Listings/*
+Objects/*
