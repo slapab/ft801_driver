@@ -442,14 +442,19 @@
           <GroupName>FT801_src</GroupName>
           <Files>
             <File>
-              <FileName>ft801_communication.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Sources\ft801_src\ft801_communication.c</FilePath>
-            </File>
-            <File>
               <FileName>ft801_gpu.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\ft801_src\ft801_gpu.h</FilePath>
+            </File>
+            <File>
+              <FileName>ft801_api.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_api.c</FilePath>
+            </File>
+            <File>
+              <FileName>ringBuffer_api.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ringBuffer_api.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -49,7 +49,7 @@ static bool _ring_buffer_empty(struct ring_buffer *rb)
 
 
 
-bool ring_buffer_init(rbd_t *rbd, rb_attr_t *attr)
+bool ring_buffer_init( rbd_t * const rbd, const rb_attr_t * const attr)
 {
     static int idx = 0;
     bool err = false; 
@@ -65,7 +65,7 @@ bool ring_buffer_init(rbd_t *rbd, rb_attr_t *attr)
                 _rb[idx].s_elem = attr->s_elem;
                 _rb[idx].n_elem = attr->n_elem;
  
-                *rbd = idx++;
+                (*rbd) = idx++;
                 err = true ;
             }
         }
@@ -79,11 +79,11 @@ bool ring_buffer_init(rbd_t *rbd, rb_attr_t *attr)
 
 
 
-bool ring_buf0er_put(rbd_t rbd, const void *data)
+bool ring_buffer_put(const rbd_t rbd, const void * const data)
 {
     bool err = true ;
  
-    if ((rbd < RING_BUFFER_MAX) && (_ring_buffer_full(&_rb[rbd]) == 0)) {
+    if ((rbd < RING_BUFFER_MAX) && (_ring_buffer_full(&_rb[rbd]) == false)) {
         const size_t offset = (_rb[rbd].head & (_rb[rbd].n_elem - 1)) * _rb[rbd].s_elem;
         memcpy(&(_rb[rbd].buf[offset]), data, _rb[rbd].s_elem);
         _rb[rbd].head++;
@@ -97,11 +97,11 @@ bool ring_buf0er_put(rbd_t rbd, const void *data)
 
 
 
-bool ring_buffer_get(rbd_t rbd, void *data)
+bool ring_buffer_get(const rbd_t rbd, void *data)
 {
     bool err = true;
  
-    if ((rbd < RING_BUFFER_MAX) && (_ring_buffer_empty(&_rb[rbd]) == 0)) {
+    if ((rbd < RING_BUFFER_MAX) && (_ring_buffer_empty(&_rb[rbd]) == false)) {
         const size_t offset = (_rb[rbd].tail & (_rb[rbd].n_elem - 1)) * _rb[rbd].s_elem;
         memcpy(data, &(_rb[rbd].buf[offset]), _rb[rbd].s_elem);
         _rb[rbd].tail++;
@@ -110,4 +110,20 @@ bool ring_buffer_get(rbd_t rbd, void *data)
     }
  
     return err;
+}
+
+
+
+size_t ring_buffer_capacity( const rbd_t rbd )
+{
+    return (size_t)(_rb[rbd].head - _rb[rbd].tail );
+}
+
+
+size_t ring_buffer_get_size( const rbd_t rbd )
+{
+    uint8_t * pBuff = (uint8_t*)_rb[rbd].buf ;
+    uint8_t * pElement = (uint8_t*)&_rb[rbd].buf[0] ;
+    
+    return sizeof(pBuff)/(sizeof(pElement)*_rb[rbd].s_elem) ;
 }

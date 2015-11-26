@@ -8,19 +8,48 @@
 
 #include <assert.h>
 
+// Declare the descryptor for ring buffer
+rbd_t rb_spi_rd_descr ;
+rbd_t rb_spi_wr_descr ;
 
-volatile uint8_t value[8] ;
-volatile uint8_t cnt = 0 ;
+
 
 void SPI4_IRQHandler(void)
 {
+    // Receive
     if( READ_BIT(SPI4->SR, SPI_SR_RXNE) )
     {
-        value[cnt] = SPI4->DR ;
-        ++cnt;
+        uint8_t tmp = SPI4->DR;
+        // Put to the buffer
+        ring_buffer_put(rb_spi_rd_descr, (const uint8_t*)&tmp);
     }
+    
+    
+    // Transmit
+    if ( READ_BIT( SPI4->SR, SPI_SR_TXE) )
+    {
+        uint8_t tmp = 0 ;
+        // get from buffer and put to the SPI tx register only if were something
+        if ( ring_buffer_get( rb_spi_wr_descr, &tmp) )
+        {
+            SPI4->DR = tmp ;
+        }
+    }
+    
+    
+    // if SPI operation has been ended then disable the SPI
+    // todo -> inform that transmision has been stoped
+    if (!(SPI4->SR & SPI_SR_BSY))
+    {
+        ft801_spi_enable(false) ;
+        // to do here
+    }
+    
+    
     NVIC_ClearPendingIRQ(SPI4_IRQn);
 }
+
+
 
 
 void sleep( uint32_t delay )
@@ -28,28 +57,39 @@ void sleep( uint32_t delay )
     for ( uint32_t i = 0 ; i < 1600000; ++i ) ;
 }
 
+
 int main(void)
 {
     
     // declare the memory for ring buffer
-    uint8_t pBuff_test[16];
-    // Declare the descryptor for ring buffer
-    rbd_t rb_spi_rd_descr ;
+    uint8_t pSPI_buff_rd[16]; // read ring buffer
+    uint8_t pSPI_buff_wr[16]; // write ring buffer
+    
     
     // declare the ring buffer structure and init it
-    rb_attr_t ringBuffSPI_read =
+    rb_attr_t ringBuffer_prepare =
                 {
-                    sizeof( pBuff_test[0]),
-                    sizeof( pBuff_test ) / sizeof( pBuff_test[0]),
-                    (void*)&pBuff_test[0]
+                    sizeof( pSPI_buff_rd[0]),
+                    sizeof( pSPI_buff_rd ) / sizeof( pSPI_buff_rd[0]),
+                    (void*)&pSPI_buff_rd[0]
                 } ;
-    
+                
     // add defined ring buffer to the system and get the descriptor
-    if ( !ring_buffer_init(&rb_spi_rd_descr, &ringBuffSPI_read) )
+    if ( !ring_buffer_init(&rb_spi_rd_descr, &ringBuffer_prepare) )
     {
         assert(!"Can not init ring buffer") ;
     }
     
+    // Prepare second buffer
+    ringBuffer_prepare.s_elem = sizeof( pSPI_buff_wr[0] );
+    ringBuffer_prepare.n_elem = sizeof( pSPI_buff_wr ) / sizeof ( pSPI_buff_wr[0] );
+    ringBuffer_prepare.buffer = (void*)&pSPI_buff_wr[0] ;
+    
+    // add defined ring buffer to the system and get the descriptor
+    if ( !ring_buffer_init(&rb_spi_wr_descr, &ringBuffer_prepare) )
+    {
+        assert(!"Can not init ring buffer") ;
+    }
     
     
     
@@ -78,7 +118,7 @@ int main(void)
         }
     }        
 
-    while( cnt < 5 ) ;
+
     
 	SystemCoreClockUpdate();
 	uint32_t a = SystemCoreClock  ;

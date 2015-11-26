@@ -33,9 +33,9 @@ typedef unsigned int rbd_t ;
 
 /* PUBLIC API STARTS HERE */
 
-bool ring_buffer_init(rbd_t *rbd, rb_attr_t *attr);
-bool ring_buf0er_put(rbd_t rbd, const void *data) ;
-bool ring_buffer_get(rbd_t rbd, void *data) ;
+bool ring_buffer_init(rbd_t * const rbd, const rb_attr_t * const attr);
+bool ring_buffer_put(const rbd_t rbd, const void * const data) ;
+bool ring_buffer_get(const rbd_t rbd, void *data) ;
 
 
 
