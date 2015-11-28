@@ -22,8 +22,8 @@ void ft801_api_init_lcd( void )
     // Push this params to the FT core
     ft801_spi_enable(true) ;
 //    ft801_spi_mem_wr16( REG_HSIZE, FT_DispWidth, false ) ;
-    ft801_spi_mem_wr16( REG_HCYCLE, FT_DispHCycle, true ) ;
-//    ft801_spi_mem_wr16( REG_HOFFSET, FT_DispHOffset, false ) ;
+    ft801_spi_mem_wr16( REG_HCYCLE, FT_DispHCycle, false ) ;
+    ft801_spi_mem_wr16( REG_HOFFSET, FT_DispHOffset, true ) ;
 //    ft801_spi_mem_wr16( REG_HSYNC0, FT_DispHSync0, false ) ;
 //    ft801_spi_mem_wr16( REG_HSYNC1, FT_DispHSync1, false ) ;
 //    

@@ -67,6 +67,7 @@ void gpu_init_spi(void)
 					;
     
     SPI_GPU->CR2 |= SPI_CR2_RXNEIE      // recived data interrupt enable
+                   | SPI_CR2_TXEIE      // tx empty interrupt enable
                    | SPI_CR2_SSOE       // NSS pin is driven by hardware
                    ;
 }
@@ -75,7 +76,8 @@ void gpu_init_spi(void)
 // blocking function!!!!
 inline static void _ft801_spi_wait_txempty()
 {
-    while(!READ_BIT(SPI_GPU->SR, SPI_SR_TXE) ) ;
+    volatile uint32_t i = 0;
+    while(!READ_BIT(SPI_GPU->SR, SPI_SR_TXE) ){}
 }
 
 inline static void _ft801_spi_clear_rx_flag()
@@ -86,11 +88,27 @@ inline static void _ft801_spi_clear_rx_flag()
     }
 }
 
+static void _ft801_spi_wait_for_rx()
+{   
+    volatile uint32_t a ;
+    while((SPI_GPU->SR & SPI_SR_RXNE) == 0) {++a;}
+}
+
+inline static void _ft801_spi_wait_for_notBusy()
+{
+    //volatile uint32_t i = 0;
+    while( READ_BIT(SPI_GPU->SR, SPI_SR_BSY) ){}
+}
+
+
+
 inline static void _ft801_spi_write_tx( const uint8_t data )
 {
     _ft801_spi_wait_txempty();
     SPI_GPU->DR = data ;
 }
+
+
 
 // just push only three bytes
 static void _ft801_spi_write_3bytes( const uint32_t data ) 
@@ -222,43 +240,36 @@ void gpu_spi_send( uint32_t reg )
 }
 
 
-// possible hang!!!! while loop !!!!
+
 uint8_t ft801_spi_rd8( const uint32_t reg )
 {
     // Enable SPI
     ft801_spi_enable(true);
 
-    uint8_t tmp = 0;
-    for (int i = 2; i >= 0; --i ) 
+    _ft801_spi_wait_txempty();
+    
+    uint8_t tmp_r = 0;
+    for (int i = 2, j = 0; j < 5 ; --i, ++j) 
     {
-        // Wait for tx buffer empty
+        if ( i >= 0 )   // write only memory address
+            SPI_GPU->DR = (uint8_t)((reg >> (8*i))) ;
+        else
+            SPI_GPU->DR = 0x01 ;
+        
         _ft801_spi_wait_txempty();
-        tmp = (uint8_t)((reg >> (8*i))) ;
-        SPI_GPU->DR = tmp;
+        _ft801_spi_wait_for_rx() ;
+        tmp_r = SPI_GPU->DR ;
+        
     }
-    
-    // Write dummy bytes to get the out
-    // First byte is a dummy byte, but te second is the valid one
-    for ( int i = 0 ; i < 2 ; ++i ) 
-    {
-        _ft801_spi_wait_txempty();
-        if ( i == 1 )
-        {
-            while ( !(SPI_GPU->SR & SPI_SR_RXNE) ) ;
-            tmp = SPI_GPU->DR ;
-            
-        }
-        SPI_GPU->DR = 0x01 ;    // write dummy byte
-    }
-    
-    // Get the result:
-    //while( SPI_GPU->SR & SPI_SR_BSY );
-    while ( !(SPI_GPU->SR & SPI_SR_RXNE) );
-    tmp = SPI_GPU->DR;
-
-    
+        
     // Disable SPI
     ft801_spi_enable(false);    
     
-    return tmp ;
+    return tmp_r ;
 }
+
+
+
+
+
+

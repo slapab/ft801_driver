@@ -8,7 +8,7 @@
 /**
 *   This macro defines how many ring buffers can be in the system
 */
-#define RING_BUFFER_MAX 1
+#define RING_BUFFER_MAX 2
 
 
 /**
@@ -37,7 +37,7 @@ bool ring_buffer_init(rbd_t * const rbd, const rb_attr_t * const attr);
 bool ring_buffer_put(const rbd_t rbd, const void * const data) ;
 bool ring_buffer_get(const rbd_t rbd, void *data) ;
 
-
+size_t ring_buffer_get_capacity( const rbd_t rbd );
 
 
 
