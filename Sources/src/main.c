@@ -4,7 +4,7 @@
 #include "spi_with_interrupts.h"
 
 
-#include "ft801_gpu.h"    // FT801 registers 
+#include "ft801_gpu.h"    // FT801 registers
 #include "ft801_api.h"    // include api functions
 
 #include "ringBuffer_api.h"
@@ -111,11 +111,13 @@ int main(void)
 //    cnt = 0 ;
     
     // init sequence
-    ft801_spi_hcmd_write( FT_HOST_CMD_CLKEXT ) ;
-    ft801_spi_hcmd_write( FT_HOST_CMD_ACTIVE ) ;
-
+    ft801_spi_host_cmd( FT_HOST_CMD_CLKEXT ) ;
+    ft801_spi_host_cmd( FT_HOST_CMD_48M ) ;
+    ft801_spi_host_cmd( FT_HOST_CMD_ACTIVE ) ;
+    ft801_spi_host_cmd( FT_HOST_CMD_CORERST ) ;
     
     sleep(2) ;
+    
     
     uint8_t ret = 0 ;
     ret = ft801_spi_rd8( REG_ID );
@@ -126,10 +128,39 @@ int main(void)
     {
         ft801_api_init_lcd() ;
         
-        // test if write was done fine and test if read function works
-        if ( ft801_spi_mem_rd16(REG_HCYCLE) == 548 ) {
-            int lt = 0 ;
-        }
+        
+        // set the backlight pwm duty 0-128
+         ft801_spi_mem_wr8(REG_PWM_DUTY, 20, true) ;
+        
+        // draw the single point
+        ft801_spi_enable(true);
+        ft801_spi_mem_wr32(RAM_DL, CLEAR(1, 1, 1), false);
+        ft801_spi_mem_wr32(RAM_DL+4, COLOR_RGB(160, 22, 22), false);
+        ft801_spi_mem_wr32(RAM_DL+8, POINT_SIZE(320), false);
+        ft801_spi_mem_wr32(RAM_DL+12, BEGIN(POINTS), false);
+        ft801_spi_mem_wr32(RAM_DL+16, VERTEX2II(50, 5, 0, 0), false);
+        ft801_spi_mem_wr32(RAM_DL+20, VERTEX2II(110, 15, 0, 0), false);
+        ft801_spi_mem_wr32(RAM_DL+24, END(), false);
+        ft801_spi_mem_wr32(RAM_DL+28, DISPLAY(), false);
+        ft801_spi_enable(false);
+        
+        ft801_spi_mem_wr8(REG_DLSWAP, DLSWAP_FRAME, true); // dispaly
+        
+        
+        
+//        // test if write was done fine and test if read function works
+//        if ( (ft801_spi_rd16(REG_HCYCLE) == 548) &&
+//             (ft801_spi_rd16(REG_HOFFSET) == 43 ) )
+//        {
+//            volatile int lt = 0 ;
+//            ++lt ;
+//            
+////            ft801_spi_mem_wr8(REG_PWM_DUTY, 6, true) ;
+////            if ( ft801_spi_rd8(REG_PWM_DUTY) == 6 )
+////            {
+////                ++lt ;
+////            }
+//        }
     }        
 
 

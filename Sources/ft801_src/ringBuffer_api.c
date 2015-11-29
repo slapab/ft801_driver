@@ -89,14 +89,6 @@ bool ring_buffer_put(const rbd_t rbd, const void * const data)
 //        const size_t offset = (_rb[rbd].head & (_rb[rbd].n_elem - 1)) * _rb[rbd].s_elem;
         const size_t offset = _rb[rbd].head % _rb[rbd].buff_size ;
         memcpy(&(_rb[rbd].buf[offset]), data, _rb[rbd].s_elem);
-//        const size_t offset = _rb[rbd].tail % _rb[rbd].buff_size ;
-//        uint8_t * ptr = (uint8_t *)data ;
-//        
-//        for( size_t i = 0 ; i < _rb[rbd].s_elem ; ++i )
-//        {
-//            _rb[rbd].buf[offset+i] = *(ptr + i);
-//        }
-        
         _rb[rbd].head++;
     } else {
         err = false ;
@@ -115,14 +107,7 @@ bool ring_buffer_get(const rbd_t rbd, void *data)
     if ((rbd < RING_BUFFER_MAX) && (_ring_buffer_empty(&_rb[rbd]) == false)) {
 //        const size_t offset = (_rb[rbd].tail & (_rb[rbd].n_elem - 1)) * _rb[rbd].s_elem;
         const size_t offset = _rb[rbd].tail % _rb[rbd].buff_size ;
-        memcpy(data, &(_rb[rbd].buf[offset]), _rb[rbd].s_elem);
-        
-//        uint8_t * ptr = (uint8_t*)data ;
-//        for( size_t i = 0 ; i < _rb[rbd].s_elem ; ++i )
-//        {
-//            *(ptr + i)= _rb[rbd].buf[offset+i] ;
-//        }
-       
+        memcpy(data, &(_rb[rbd].buf[offset]), _rb[rbd].s_elem);       
         _rb[rbd].tail++;
     } else {
         err = false ;

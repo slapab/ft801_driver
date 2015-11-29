@@ -1,6 +1,7 @@
 #include "stm32f4xx.h"
 
 #include "stdbool.h"	// using bool type
+#include "ft801_gpu.h"
 
 
 #define GPIO_SPI_GPU GPIOE
@@ -88,10 +89,10 @@ inline static void _ft801_spi_clear_rx_flag()
     }
 }
 
-static void _ft801_spi_wait_for_rx()
+inline static void _ft801_spi_wait_for_rx()
 {   
-    volatile uint32_t a ;
-    while((SPI_GPU->SR & SPI_SR_RXNE) == 0) {++a;}
+    volatile uint32_t i ;
+    while((SPI_GPU->SR & SPI_SR_RXNE) == 0) {}
 }
 
 inline static void _ft801_spi_wait_for_notBusy()
@@ -111,15 +112,15 @@ inline static void _ft801_spi_write_tx( const uint8_t data )
 
 
 // just push only three bytes
-static void _ft801_spi_write_3bytes( const uint32_t data ) 
+// This is not the little-endian
+static void _ft801_spi_write_address( const uint32_t addr ) 
 {
-    uint8_t tmp = 0;
-    for (int i = 2 ; i >= 0 ; --i ) 
+
+    for (int i = 2 ; i >= 0 ; --i )
     {
         // Wait for tx buffer empty
         _ft801_spi_wait_txempty();
-        tmp = (uint8_t)((data >> (8*i))) ;
-        SPI_GPU->DR = tmp;
+        SPI_GPU->DR  = (uint8_t)((addr >> (8*i))) ;
     }
 }
 
@@ -134,7 +135,9 @@ void ft801_spi_enable( const bool enabled )
 	else
 	{
         // hang till it will be not busy and tx buffer is empty
-        while( (SPI_GPU->SR & SPI_SR_BSY) && !(SPI_GPU->SR & SPI_SR_TXE) );
+//        while( (SPI_GPU->SR & SPI_SR_BSY) && !(SPI_GPU->SR & SPI_SR_TXE) );
+        _ft801_spi_wait_txempty();
+        _ft801_spi_wait_for_notBusy();
 		SPI_GPU->CR1 &= ~(SPI_CR1_SPE);
 	}
 }
@@ -142,14 +145,36 @@ void ft801_spi_enable( const bool enabled )
 /** Write command -> only write -> all readed data are not relevant
 *   Writing only three bytes ( in that order ) MSB+2, MSB+1, MSB    
 */
-void ft801_spi_hcmd_write( const uint32_t cmd )
-{
-    uint8_t tmp = 0 ;
-    
+void ft801_spi_host_cmd( uint32_t cmd )
+{   
     ft801_spi_enable(true) ;
-    _ft801_spi_write_3bytes( cmd );
+    _ft801_spi_write_address( cmd & 0x00400000 );
     ft801_spi_enable(false) ;
 }
+
+
+// little-endian
+void ft801_spi_mem_wr32( const uint32_t addr,
+                         const uint32_t data,
+                         const bool one_shot )
+{
+    if ( one_shot )
+        ft801_spi_enable(true);
+    
+    // write the address
+    _ft801_spi_write_address( addr | 0x00800000 ) ;
+    
+    // Write the data - little endian
+    for ( uint32_t i = 0 ; i < 4; ++i )
+    {
+        _ft801_spi_wait_txempty();
+        SPI_GPU->DR = (uint8_t)( data >> (i<<3) ); // i<<3 generates, 0, 8, 16, 24 bit shifting
+    }
+    
+    if ( one_shot )
+        ft801_spi_enable(false);
+}                           
+
 
 
 void ft801_spi_mem_wr16( const uint32_t addr,
@@ -160,106 +185,100 @@ void ft801_spi_mem_wr16( const uint32_t addr,
         ft801_spi_enable(true);
     
     // write the address
-    _ft801_spi_write_3bytes( addr ) ;
+    _ft801_spi_write_address( addr | 0x00800000 ) ;
     
-    // Write the data
-    for ( int i = 1 ; i >= 0 ; --i )
+    // Write the data - little endian
+    for ( uint32_t i = 0 ; i < 2 ; ++i )
     {
         _ft801_spi_wait_txempty();
-        SPI_GPU->DR = (uint8_t)( data >> (i*8) );
+        SPI_GPU->DR = (uint8_t)( data >> (i<<3) );
     }
     
     if ( one_shot )
         ft801_spi_enable(false);
 }
 
-uint16_t ft801_spi_mem_rd16( const uint32_t addr )
 
+void ft801_spi_mem_wr8( const uint32_t addr,
+                        const uint8_t data,
+                        const bool one_shot )
 {
-    ft801_spi_enable(true);
+    if ( true == one_shot )
+        ft801_spi_enable(true);
     
-    uint8_t tmp = 0;
-    // write address
-    for (int i = 2; i >= 0; --i ) 
-    {
-        // Wait for tx buffer empty
-        _ft801_spi_wait_txempty();
-        tmp = (uint8_t)((addr >> (8*i))) ;
-        SPI_GPU->DR = tmp;
-    }
+    // write the address
+        _ft801_spi_write_address( addr | 0x00800000);
     
-    // Write dummy bytes to get the out
-    // First byte is a dummy byte, but te second and third are the valid
-    uint16_t data = 0;
-    for ( int i = 0 ; i < 3 ; ++i ) 
-    {
-        _ft801_spi_wait_txempty();
-//        if ( i == 1 ) // get MSB byte
-//        {
-//            while ( !(SPI_GPU->SR & SPI_SR_RXNE) ) ;
-//            data |= (uint16_t)((SPI_GPU->DR & 0x00FF) << 8) ;
-//        }
-        if ( i == 2 ) // get LSB byte
-        {
-            while ( !(SPI_GPU->SR & SPI_SR_RXNE) ) ;
-            data |= SPI_GPU->DR & 0x00FF ;
-        }
-        else if ( i < 2 ) // read dummy byte
-        {
-            while ( !(SPI_GPU->SR & SPI_SR_RXNE) ) ;
-            tmp = SPI_GPU->DR ;
-        }
-       
-        SPI_GPU->DR = 0x01 ;    // write dummy byte
-    }
+    // write the data
+    _ft801_spi_wait_txempty();
+    SPI_GPU->DR = (uint8_t)data;
     
-    // Get the LSB byte:
-    while ( !(SPI_GPU->SR & SPI_SR_RXNE) ) ;
-    data |= (uint16_t)((SPI_GPU->DR & 0x00FF) << 8) ;
+    if ( true == one_shot )
+        ft801_spi_enable(false);
+}
 
+
+
+uint16_t ft801_spi_rd16( uint32_t addr )
+{
+    uint16_t tmp_out;
     
+    // be sure that this is memory-read command style
+    addr = addr & 0xFF3FFFFF ;
+    
+    ft801_spi_enable(true);
+   
+    // write the address
+    _ft801_spi_write_address(addr);
+    _ft801_spi_wait_txempty();
+    
+    // write dummy byte - and read dummy byte
+    SPI_GPU->DR = 0x07 ;
+    _ft801_spi_wait_txempty();
+    _ft801_spi_wait_for_rx();
+    tmp_out = SPI_GPU->DR;
+    
+    // read proper value - little endian
+    tmp_out = 0;
+    for ( uint32_t i = 0; i < 2; ++i )
+    {
+        SPI_GPU->DR = 0x07 ;
+        
+        // get the byte
+         _ft801_spi_wait_txempty();
+         _ft801_spi_wait_for_rx();
+        tmp_out |= ((uint16_t)SPI_GPU->DR << (i<<3)) ;
+    }
+
     ft801_spi_enable(false);
     
-    return data ;
+    return tmp_out ;
 }
                          
                          
-void gpu_spi_send( uint32_t reg )
+uint8_t ft801_spi_rd8( uint32_t addr )
 {
-    //reg &= 0x00FFFFFF ; // make read command
+    // be sure that this is memory-read command style
+    addr = addr & 0xFF3FFFFF ;
     
-    _ft801_spi_write_3bytes( reg );
-    
-    // Dummy byte is first, but te second is the required byte
-    for (int i =  0 ; i < 2 ; ++i ) 
-    {
-        // Wait for tx buffer empty
-       _ft801_spi_wait_txempty();
-        SPI_GPU->DR = 0x00;
-    }
-}
-
-
-
-uint8_t ft801_spi_rd8( const uint32_t reg )
-{
     // Enable SPI
     ft801_spi_enable(true);
 
+    // write the address
+    _ft801_spi_write_address(addr);
     _ft801_spi_wait_txempty();
     
     uint8_t tmp_r = 0;
-    for (int i = 2, j = 0; j < 5 ; --i, ++j) 
+    for (uint32_t i = 0 ; i < 2 ; ++i) // get the dummy and proper byte
     {
-        if ( i >= 0 )   // write only memory address
-            SPI_GPU->DR = (uint8_t)((reg >> (8*i))) ;
-        else
-            SPI_GPU->DR = 0x01 ;
+        SPI_GPU->DR = 0x01 ;
         
         _ft801_spi_wait_txempty();
-        _ft801_spi_wait_for_rx() ;
-        tmp_r = SPI_GPU->DR ;
+
+        if ( i == 1 )
+            _ft801_spi_wait_for_rx() ;        
         
+        tmp_r = SPI_GPU->DR ;
     }
         
     // Disable SPI

@@ -21,23 +21,23 @@ void ft801_api_init_lcd( void )
     
     // Push this params to the FT core
     ft801_spi_enable(true) ;
-//    ft801_spi_mem_wr16( REG_HSIZE, FT_DispWidth, false ) ;
+    ft801_spi_mem_wr16( REG_HSIZE, FT_DispWidth, false ) ;
     ft801_spi_mem_wr16( REG_HCYCLE, FT_DispHCycle, false ) ;
-    ft801_spi_mem_wr16( REG_HOFFSET, FT_DispHOffset, true ) ;
-//    ft801_spi_mem_wr16( REG_HSYNC0, FT_DispHSync0, false ) ;
-//    ft801_spi_mem_wr16( REG_HSYNC1, FT_DispHSync1, false ) ;
-//    
-//    ft801_spi_mem_wr16( REG_VSIZE, FT_DispHeight, false ) ;
-//    ft801_spi_mem_wr16( REG_VCYCLE, FT_DispVCycle, false ) ;
-//    ft801_spi_mem_wr16( REG_VOFFSET, FT_DispVOffset, false ) ;
-//    ft801_spi_mem_wr16( REG_VSYNC0, FT_DispVSync0, false ) ;
-//    ft801_spi_mem_wr16( REG_VSYNC1, FT_DispVSync1, false ) ;
-//    
-//    ft801_spi_mem_wr16( REG_SWIZZLE, FT_DispSwizzle, false ) ;
-//    ft801_spi_mem_wr16( REG_PCLK_POL, FT_DispPCLKPol, false ) ;
-    // ft801_spi_mem_wr16( REG_PCLK, FT_DispPCLK, false ) ; // enable pll
+    ft801_spi_mem_wr16( REG_HOFFSET, FT_DispHOffset, false ) ;
+    ft801_spi_mem_wr16( REG_HSYNC0, FT_DispHSync0, false ) ;
+    ft801_spi_mem_wr16( REG_HSYNC1, FT_DispHSync1, false ) ;
+
+    ft801_spi_mem_wr16( REG_VSIZE, FT_DispHeight, false ) ;
+    ft801_spi_mem_wr16( REG_VCYCLE, FT_DispVCycle, false ) ;
+    ft801_spi_mem_wr16( REG_VOFFSET, FT_DispVOffset, false ) ;
+    ft801_spi_mem_wr16( REG_VSYNC0, FT_DispVSync0, false ) ;
+    ft801_spi_mem_wr16( REG_VSYNC1, FT_DispVSync1, false ) ;
+    
+    ft801_spi_mem_wr16( REG_SWIZZLE, FT_DispSwizzle, false ) ;
+    ft801_spi_mem_wr16( REG_PCLK_POL, FT_DispPCLKPol, false ) ;
+        
+    ft801_spi_mem_wr16( REG_PCLK, FT_DispPCLK, false ) ; // enable pll - whole gpu
 
     
     ft801_spi_enable(false) ;
-    
 }

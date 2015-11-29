@@ -339,6 +339,8 @@ typedef struct FT_Gpu_Fonts
 	ft_uint32_t	PointerToFontGraphicsData;
 }FT_Gpu_Fonts_t;
 
+
+
 #endif /* #ifndef _FT_GPU_H_ */
 
 
