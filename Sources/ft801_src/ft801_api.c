@@ -20,24 +20,63 @@ void ft801_api_init_lcd( void )
     const uint16_t FT_DispPCLKPol = 1;
     
     // Push this params to the FT core
-    ft801_spi_enable(true) ;
-    ft801_spi_mem_wr16( REG_HSIZE, FT_DispWidth, false ) ;
-    ft801_spi_mem_wr16( REG_HCYCLE, FT_DispHCycle, false ) ;
-    ft801_spi_mem_wr16( REG_HOFFSET, FT_DispHOffset, false ) ;
-    ft801_spi_mem_wr16( REG_HSYNC0, FT_DispHSync0, false ) ;
-    ft801_spi_mem_wr16( REG_HSYNC1, FT_DispHSync1, false ) ;
 
-    ft801_spi_mem_wr16( REG_VSIZE, FT_DispHeight, false ) ;
-    ft801_spi_mem_wr16( REG_VCYCLE, FT_DispVCycle, false ) ;
-    ft801_spi_mem_wr16( REG_VOFFSET, FT_DispVOffset, false ) ;
-    ft801_spi_mem_wr16( REG_VSYNC0, FT_DispVSync0, false ) ;
-    ft801_spi_mem_wr16( REG_VSYNC1, FT_DispVSync1, false ) ;
+    ft801_spi_mem_wr16( REG_HSIZE, FT_DispWidth) ;
+    ft801_spi_mem_wr16( REG_HCYCLE, FT_DispHCycle) ;
+    ft801_spi_mem_wr16( REG_HOFFSET, FT_DispHOffset) ;
+    ft801_spi_mem_wr16( REG_HSYNC0, FT_DispHSync0) ;
+    ft801_spi_mem_wr16( REG_HSYNC1, FT_DispHSync1) ;
+
+    ft801_spi_mem_wr16( REG_VSIZE, FT_DispHeight) ;
+    ft801_spi_mem_wr16( REG_VCYCLE, FT_DispVCycle) ;
+    ft801_spi_mem_wr16( REG_VOFFSET, FT_DispVOffset) ;
+    ft801_spi_mem_wr16( REG_VSYNC0, FT_DispVSync0) ;
+    ft801_spi_mem_wr16( REG_VSYNC1, FT_DispVSync1) ;
     
-    ft801_spi_mem_wr16( REG_SWIZZLE, FT_DispSwizzle, false ) ;
-    ft801_spi_mem_wr16( REG_PCLK_POL, FT_DispPCLKPol, false ) ;
+    ft801_spi_mem_wr8( REG_SWIZZLE, FT_DispSwizzle) ;
+    ft801_spi_mem_wr8( REG_PCLK_POL, FT_DispPCLKPol) ;
         
-    ft801_spi_mem_wr16( REG_PCLK, FT_DispPCLK, false ) ; // enable pll - whole gpu
+    ft801_spi_mem_wr8( REG_PCLK, FT_DispPCLK) ; // enable pll - whole gpu
 
-    
-    ft801_spi_enable(false) ;
 }
+
+
+void ft801_api_enable_lcd( bool enable )
+{
+    uint8_t tmp ;
+    
+    // direction register
+    tmp = ft801_spi_rd8(REG_GPIO_DIR) ;
+    if ( true == enable )
+    {    
+        tmp |= ( 1 << 7 ) ;
+        ft801_spi_mem_wr8(REG_GPIO_DIR, tmp);
+    }
+    
+    // value register
+    tmp = ft801_spi_rd8(REG_GPIO) ;
+    if ( true == enable )
+        tmp |= ( 1 << 7 );
+    else
+        tmp &= ~( 1 << 7 );
+    
+    ft801_spi_mem_wr8(REG_GPIO, tmp);
+}
+
+
+bool ft801_api_is_enabled( void )
+{
+    uint8_t tmp;
+    
+    tmp = ft801_spi_rd8(REG_GPIO_DIR) ;
+    if ( !(tmp & (1<<7)) )
+        return false ;
+    
+    tmp = ft801_spi_rd8(REG_GPIO) ;
+    if ( !(tmp & (1<<7)) )
+        return false ;
+    
+    
+    return true ;
+}
+

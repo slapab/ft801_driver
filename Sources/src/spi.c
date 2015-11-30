@@ -147,19 +147,23 @@ void ft801_spi_enable( const bool enabled )
 */
 void ft801_spi_host_cmd( uint32_t cmd )
 {   
+    // prepare cmd arg as host command
+//    cmd &=  ~(1 << 23) ;
+//    cmd |= (1 << 22);
+//    cmd &= 0x00FF0000 ;
+    
     ft801_spi_enable(true) ;
-    _ft801_spi_write_address( cmd & 0x00400000 );
+    _ft801_spi_write_address( cmd );
     ft801_spi_enable(false) ;
 }
 
 
 // little-endian
 void ft801_spi_mem_wr32( const uint32_t addr,
-                         const uint32_t data,
-                         const bool one_shot )
+                         const uint32_t data)
 {
-    if ( one_shot )
-        ft801_spi_enable(true);
+
+    ft801_spi_enable(true);
     
     // write the address
     _ft801_spi_write_address( addr | 0x00800000 ) ;
@@ -171,18 +175,16 @@ void ft801_spi_mem_wr32( const uint32_t addr,
         SPI_GPU->DR = (uint8_t)( data >> (i<<3) ); // i<<3 generates, 0, 8, 16, 24 bit shifting
     }
     
-    if ( one_shot )
-        ft801_spi_enable(false);
+    ft801_spi_enable(false);
 }                           
 
 
 
 void ft801_spi_mem_wr16( const uint32_t addr,
-                         const uint16_t data,
-                         const bool one_shot )
+                         const uint16_t data )
 {
-    if ( one_shot )
-        ft801_spi_enable(true);
+
+    ft801_spi_enable(true);
     
     // write the address
     _ft801_spi_write_address( addr | 0x00800000 ) ;
@@ -194,17 +196,15 @@ void ft801_spi_mem_wr16( const uint32_t addr,
         SPI_GPU->DR = (uint8_t)( data >> (i<<3) );
     }
     
-    if ( one_shot )
-        ft801_spi_enable(false);
+    ft801_spi_enable(false);
 }
 
 
 void ft801_spi_mem_wr8( const uint32_t addr,
-                        const uint8_t data,
-                        const bool one_shot )
+                        const uint8_t data )
 {
-    if ( true == one_shot )
-        ft801_spi_enable(true);
+
+    ft801_spi_enable(true);
     
     // write the address
         _ft801_spi_write_address( addr | 0x00800000);
@@ -213,8 +213,7 @@ void ft801_spi_mem_wr8( const uint32_t addr,
     _ft801_spi_wait_txempty();
     SPI_GPU->DR = (uint8_t)data;
     
-    if ( true == one_shot )
-        ft801_spi_enable(false);
+    ft801_spi_enable(false);
 }
 
 

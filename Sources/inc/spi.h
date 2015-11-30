@@ -11,12 +11,10 @@
     
     uint8_t ft801_spi_rd8( uint32_t addr );
     void ft801_spi_mem_wr32( const uint32_t addr,
-                         const uint32_t data,
-                         const bool one_shot ) ;
-    void ft801_spi_mem_wr16( const uint32_t addr, const uint16_t data, const bool one_shot ) ;
+                         const uint32_t data) ;
+    void ft801_spi_mem_wr16( const uint32_t addr, const uint16_t data) ;
     void ft801_spi_mem_wr8( const uint32_t addr,
-                        const uint8_t data,
-                        const bool one_shot ) ;
+                        const uint8_t data ) ;
     uint16_t ft801_spi_rd16( uint32_t addr ) ;
     
     

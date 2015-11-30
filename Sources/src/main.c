@@ -114,6 +114,7 @@ int main(void)
     ft801_spi_host_cmd( FT_HOST_CMD_CLKEXT ) ;
     ft801_spi_host_cmd( FT_HOST_CMD_48M ) ;
     ft801_spi_host_cmd( FT_HOST_CMD_ACTIVE ) ;
+    
     ft801_spi_host_cmd( FT_HOST_CMD_CORERST ) ;
     
     sleep(2) ;
@@ -127,26 +128,41 @@ int main(void)
     if ( ret == 0x7C )
     {
         ft801_api_init_lcd() ;
-        
-        
+
         // set the backlight pwm duty 0-128
-         ft801_spi_mem_wr8(REG_PWM_DUTY, 20, true) ;
+         ft801_spi_mem_wr8(REG_PWM_DUTY, 5) ;
         
         // draw the single point
-        ft801_spi_enable(true);
-        ft801_spi_mem_wr32(RAM_DL, CLEAR(1, 1, 1), false);
-        ft801_spi_mem_wr32(RAM_DL+4, COLOR_RGB(160, 22, 22), false);
-        ft801_spi_mem_wr32(RAM_DL+8, POINT_SIZE(320), false);
-        ft801_spi_mem_wr32(RAM_DL+12, BEGIN(POINTS), false);
-        ft801_spi_mem_wr32(RAM_DL+16, VERTEX2II(50, 5, 0, 0), false);
-        ft801_spi_mem_wr32(RAM_DL+20, VERTEX2II(110, 15, 0, 0), false);
-        ft801_spi_mem_wr32(RAM_DL+24, END(), false);
-        ft801_spi_mem_wr32(RAM_DL+28, DISPLAY(), false);
-        ft801_spi_enable(false);
+//          ft801_spi_enable(true);
+    
+//        ft801_spi_mem_wr32(RAM_DL, CLEAR_COLOR_RGB(0,255,0), true);
+//        ft801_spi_mem_wr32(RAM_DL+4, CLEAR(1, 0, 0), true);
+//        ft801_spi_mem_wr32(RAM_DL+8, DISPLAY(), true);
         
-        ft801_spi_mem_wr8(REG_DLSWAP, DLSWAP_FRAME, true); // dispaly
+        ft801_spi_mem_wr32(RAM_DL, CLEAR(1, 1, 1));
+        ft801_spi_mem_wr32(RAM_DL+4, POINT_SIZE(320));
+        
+        ft801_spi_mem_wr32(RAM_DL+8, BEGIN(POINTS));
+        ft801_spi_mem_wr32(RAM_DL+12, COLOR_RGB(160, 22, 22));
+        ft801_spi_mem_wr32(RAM_DL+16, VERTEX2II(110, 20, 0, 0));
+        
+        ft801_spi_mem_wr32(RAM_DL+20, COLOR_RGB(160, 255, 255));
+        ft801_spi_mem_wr32(RAM_DL+24, VERTEX2II(240, 136, 0, 0));
+        
+        ft801_spi_mem_wr32(RAM_DL+28, END());
+        
+        ft801_spi_mem_wr32(RAM_DL+32, DISPLAY());
         
         
+        ft801_spi_mem_wr8(REG_DLSWAP, DLSWAP_FRAME); // dispaly
+//        ft801_spi_enable(false);
+        
+        if ( false == ft801_api_is_enabled() )
+        {
+            ft801_api_enable_lcd(true);
+        }
+        
+        //ft801_spi_mem_wr8( REG_PCLK, 10, true ) ; // enable pll - whole gpu
         
 //        // test if write was done fine and test if read function works
 //        if ( (ft801_spi_rd16(REG_HCYCLE) == 548) &&
