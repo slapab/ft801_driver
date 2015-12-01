@@ -58,24 +58,17 @@ bool ft801_api_dl_append( const uint32_t data )
 // then need to 'implement' then the interface
 uint32_t ft801_api_dl_flush( void )
 {
-    uint32_t idx = 0 ;
     
-    uint32_t * pBuff = _dl_descr.m_pBuff ;
-    uint32_t gpu_addr = _dl_descr.m_startAddr ;
-    uint32_t maxSize = _dl_descr.m_pNextPtr - pBuff ;
+    uint32_t maxSize = _dl_descr.m_pNextPtr - _dl_descr.m_pBuff ;
     
-    
-    if ( NULL == pBuff )
+    if ( NULL == _dl_descr.m_pBuff )
         return 2 ;
     
     if ( 0 == maxSize )
         return 1 ;
     
-    for ( uint32_t i = 0 ; i < maxSize ; ++i )
-    {
-        ft801_spi_mem_wr32( gpu_addr, pBuff[i] );
-        gpu_addr += 4 ;
-    }
+    
+    ft801_spi_mem_wrStream( _dl_descr.m_startAddr, _dl_descr.m_pBuff, maxSize ) ;
    
     return 0;
 }

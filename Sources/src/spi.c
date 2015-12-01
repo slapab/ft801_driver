@@ -159,6 +159,29 @@ void ft801_spi_host_cmd( uint32_t cmd )
 
 
 // little-endian
+void ft801_spi_mem_wrStream( const uint32_t addr,
+                            uint32_t * pBuff,
+                            const uint32_t len )
+{
+    ft801_spi_enable(true);
+    
+    // write the address
+    _ft801_spi_write_address( addr | 0x00800000 ) ;
+    
+    for ( uint32_t item = 0 ; item < len ; ++item )
+    {
+        // Write the data - little endian
+        for ( uint32_t i = 0 ; i < 4; ++i )
+        {
+            _ft801_spi_wait_txempty();
+            SPI_GPU->DR = (uint8_t)( pBuff[item] >> (i<<3) ); // i<<3 generates, 0, 8, 16, 24 bit shifting
+        }
+    }
+    
+    ft801_spi_enable(false);
+}
+
+// little-endian
 void ft801_spi_mem_wr32( const uint32_t addr,
                          const uint32_t data)
 {

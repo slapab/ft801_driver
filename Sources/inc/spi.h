@@ -10,6 +10,11 @@
     
     
     uint8_t ft801_spi_rd8( uint32_t addr );
+    
+    void ft801_spi_mem_wrStream( const uint32_t addr,
+                            uint32_t * pBuff,
+                            const uint32_t len );
+    
     void ft801_spi_mem_wr32( const uint32_t addr,
                          const uint32_t data) ;
     void ft801_spi_mem_wr16( const uint32_t addr, const uint16_t data) ;
