@@ -471,6 +471,16 @@
               <FileType>5</FileType>
               <FilePath>.\Sources\ft801_src\ringBuffer_api.h</FilePath>
             </File>
+            <File>
+              <FileName>ft801_api_dl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_api_dl.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft801_api_dl.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_api_dl.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

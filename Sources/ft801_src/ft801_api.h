@@ -3,6 +3,12 @@
 
 #include <stdbool.h>
 
+/* 
+*   Display List API
+*/
+#include "ft801_api_dl.h"
+
+
 void ft801_api_init_lcd( void ) ;
 
 /**
@@ -11,6 +17,9 @@ void ft801_api_init_lcd( void ) ;
 */
 void ft801_api_enable_lcd( bool enable ) ;
 bool ft801_api_is_enabled( void ) ;
+
+
+
 
 
 #endif
