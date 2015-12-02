@@ -12,6 +12,9 @@
 
 #include <assert.h>
 
+//#define _EXAMPLE_DL_TWO_BALLS
+#define _EXAMPLE_CMD
+
 // Declare the descryptor for ring buffer
 rbd_t rb_spi_rd_descr ;
 rbd_t rb_spi_wr_descr ;
@@ -65,7 +68,7 @@ void SPI4_IRQHandler(void)
 void sleep( uint32_t delay )
 {
     volatile int i = 0;
-    for ( uint32_t i = 0 ; i < 160000; ++i ) {}
+    for ( uint32_t i = 0 ; i < 1600000; ++i ) {}
 }
 
 
@@ -137,14 +140,12 @@ int main(void)
         }
         
         // set the backlight pwm duty 0-128
-         ft801_spi_mem_wr8(REG_PWM_DUTY, 25) ;
+        ft801_spi_mem_wr8(REG_PWM_DUTY, 25) ;
         
-        // draw the single point
-//          ft801_spi_enable(true);
-    
-//        ft801_spi_mem_wr32(RAM_DL, CLEAR_COLOR_RGB(0,255,0), true);
-//        ft801_spi_mem_wr32(RAM_DL+4, CLEAR(1, 0, 0), true);
-//        ft801_spi_mem_wr32(RAM_DL+8, DISPLAY(), true);
+        
+        
+#ifdef _EXAMPLE_DL_TWO_BALLS        
+        
         uint32_t psize = 16*20 ;
         uint32_t x1 = 16+(psize/16);
         uint32_t y1 = 16+(psize/16);
@@ -178,12 +179,13 @@ int main(void)
         } 
         ft801_spi_mem_wr8(REG_DLSWAP, FT_DLSWAP_FRAME); // swap list
         
-        int32_t mov1 = 3 ;
-        int32_t movy1 = 3 ;
+        int32_t mov1 = 2 ;
+        int32_t movy1 = 2 ;
         
-        int32_t movx2 = -3 ;
-        int32_t movy2 = -3 ;
+        int32_t movx2 = -2 ;
+        int32_t movy2 = -2 ;
         
+        // example which using MACRO's in the GPU to moving two balls
         for ( ;; )
         {
             
@@ -215,25 +217,41 @@ int main(void)
             ft801_spi_mem_wr32(REG_MACRO_0, VERTEX2II(x1, y1, 0, 0));
             ft801_spi_mem_wr32(REG_MACRO_1, VERTEX2II(x2, y2, 0, 0));
         }
+#endif
 
         
+#ifdef _EXAMPLE_CMD
+     
+        uint8_t cmd_buffer[3+(4*30)] ; // buffer for 30 commands ( 3 for address)
+        
+        ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
+//        ft801_api_cmd_append(CMD_DLSTART) ;
+//        ft801_api_cmd_append(CLEAR_COLOR_RGB(0, 230, 255));
+//        ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
+//        ft801_api_cmd_append(POINT_SIZE(320));
+//        ft801_api_cmd_append(BEGIN(FT_POINTS)) ;
+//        ft801_api_cmd_append(COLOR_RGB(160, 22, 22));
+//        ft801_api_cmd_append(VERTEX2II(32, 32, 0, 0)); // vertix
+//        ft801_api_cmd_append(END()) ;
+//        ft801_api_cmd_append(DISPLAY()) ;
+//        ft801_api_cmd_append(CMD_SWAP);
        
+        ft801_api_cmd_append(CMD_DLSTART) ;
+        ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
+        ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
+        //ft801_api_cmd_spinner(240,150, 0,0);
+        ft801_api_cmd_spinner(240,150, 1,0);
         
-        //ft801_spi_mem_wr8( REG_PCLK, 10, true ) ; // enable pll - whole gpu
+        //ft801_api_cmd_append(CMD_CALIBRATE);
+        //ft801_api_cmd_append(CMD_SWAP);
+        ft801_api_cmd_flush();
+       
+//        sleep(1);
+//        ft801_spi_mem_wr8(REG_DLSWAP, FT_DLSWAP_FRAME); // swap list 
         
-//        // test if write was done fine and test if read function works
-//        if ( (ft801_spi_rd16(REG_HCYCLE) == 548) &&
-//             (ft801_spi_rd16(REG_HOFFSET) == 43 ) )
-//        {
-//            volatile int lt = 0 ;
-//            ++lt ;
-//            
-////            ft801_spi_mem_wr8(REG_PWM_DUTY, 6, true) ;
-////            if ( ft801_spi_rd8(REG_PWM_DUTY) == 6 )
-////            {
-////                ++lt ;
-////            }
-//        }
+#endif
+        
+
     }        
 
 

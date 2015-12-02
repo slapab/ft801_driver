@@ -1,6 +1,6 @@
 #ifndef _FT801_API_DISPLAYLIST_H_
 #define _FT801_API_DISPLAYLIST_H_
-
+#include <stdint.h>
 /*
 *   API for using DL ( display list ) in blocking way
 */

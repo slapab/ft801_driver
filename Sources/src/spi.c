@@ -120,7 +120,7 @@ static void _ft801_spi_write_address( const uint32_t addr )
     {
         // Wait for tx buffer empty
         _ft801_spi_wait_txempty();
-        SPI_GPU->DR  = (uint8_t)((addr >> (8*i))) ;
+        SPI_GPU->DR  = (uint8_t)((addr >> (i<<3))) ;    // i<<3 means i*8
     }
 }
 
@@ -155,6 +155,21 @@ void ft801_spi_host_cmd( uint32_t cmd )
     ft801_spi_enable(true) ;
     _ft801_spi_write_address( cmd );
     ft801_spi_enable(false) ;
+}
+
+void spi_write_stream( uint8_t * const buff, const uint32_t len )
+{
+    ft801_spi_enable(true);
+    
+    for ( uint32_t i = 0 ; i < len ; ++i )
+    {
+        _ft801_spi_wait_txempty();
+        SPI_GPU->DR = buff[i];
+    }
+    
+    _ft801_spi_wait_for_notBusy();
+    
+    ft801_spi_enable(false);
 }
 
 

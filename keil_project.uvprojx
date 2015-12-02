@@ -481,6 +481,16 @@
               <FileType>5</FileType>
               <FilePath>.\Sources\ft801_src\ft801_api_dl.h</FilePath>
             </File>
+            <File>
+              <FileName>ft801_api_cmd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_api_cmd.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft801_api_cmd.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_api_cmd.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

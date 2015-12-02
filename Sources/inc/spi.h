@@ -10,7 +10,8 @@
     
     
     uint8_t ft801_spi_rd8( uint32_t addr );
-    
+
+
     void ft801_spi_mem_wrStream( const uint32_t addr,
                             uint32_t * pBuff,
                             const uint32_t len );
@@ -22,6 +23,9 @@
                         const uint8_t data ) ;
     uint16_t ft801_spi_rd16( uint32_t addr ) ;
     
+        
     
+    // just SPI sending
+    void spi_write_stream( uint8_t * const buff, const uint32_t len );
     
 #endif

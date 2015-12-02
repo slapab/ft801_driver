@@ -8,6 +8,10 @@
 */
 #include "ft801_api_dl.h"
 
+/*
+*   COMMAND API
+*/
+#include "ft801_api_cmd.h"
 
 void ft801_api_init_lcd( void ) ;
 
