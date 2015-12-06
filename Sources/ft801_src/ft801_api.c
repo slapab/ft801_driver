@@ -80,3 +80,28 @@ bool ft801_api_is_enabled( void )
     return true ;
 }
 
+
+
+
+void ft801_api_enable_it_pin( bool enable )
+{
+    if( true == enable )
+        ft801_spi_mem_wr8( REG_INT_EN, 1 );
+    else
+        ft801_spi_mem_wr8( REG_INT_EN, 0 ) ;
+}
+
+
+void ft801_api_enable_it_src( const uint8_t mask )
+{
+    ft801_spi_mem_wr8( REG_INT_MASK,
+            mask | ft801_spi_rd8(REG_INT_MASK) );
+}
+
+
+
+void ft801_api_disable_it_src( const uint8_t mask )
+{
+    ft801_spi_mem_wr8( REG_INT_MASK,
+            ft801_spi_rd8(REG_INT_MASK) & (~mask) );
+}

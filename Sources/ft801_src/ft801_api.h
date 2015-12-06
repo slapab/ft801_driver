@@ -22,6 +22,19 @@ void ft801_api_init_lcd( void ) ;
 void ft801_api_enable_lcd( bool enable ) ;
 bool ft801_api_is_enabled( void ) ;
 
+/**
+*   Enable or disable an interrupt pin
+*/
+void ft801_api_enable_it_pin( bool enable );
+/**
+*   Enable given interrupt source
+*/
+void ft801_api_enable_it_src( const uint8_t mask );
+/**
+*   Disable given interrupt source
+*/
+void ft801_api_disable_it_src( const uint8_t mask );
+
 
 
 

@@ -13,7 +13,8 @@
 #include <assert.h>
 
 //#define _EXAMPLE_DL_TWO_BALLS
-#define _EXAMPLE_CMD
+//#define _EXAMPLE_CMD
+#define _EXAMPLE_TAG_TRACK
 
 // Declare the descryptor for ring buffer
 rbd_t rb_spi_rd_descr ;
@@ -264,7 +265,37 @@ int main(void)
 //        ft801_spi_mem_wr8(REG_DLSWAP, FT_DLSWAP_FRAME); // swap list 
         
 #endif
+
+
+#ifdef _EXAMPLE_TAG_TRACK
+        uint8_t cmd_buffer[3+(4*60)] ; // buffer for 30 commands ( 3 for address)
         
+        ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
+        // example with text
+        ft801_api_cmd_append(CMD_DLSTART) ;
+        //ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
+        //ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
+        
+        ft801_api_cmd_append( CLEAR_COLOR_RGB(5, 45, 110) ); 
+        ft801_api_cmd_append( COLOR_RGB(255, 168, 64) ); 
+        ft801_api_cmd_append( CLEAR(1 ,1 ,1) ); 
+        ft801_api_cmd_append( BEGIN(FT_RECTS) ); 
+        ft801_api_cmd_append( VERTEX2F(60 * 16,50 * 16) ); 
+        ft801_api_cmd_append( VERTEX2F(100 * 16,62 * 16) ); 
+        ft801_api_cmd_append( COLOR_RGB(255, 0, 0) ); 
+        ft801_api_cmd_append( VERTEX2F(60 * 16,50 * 16) ); 
+        ft801_api_cmd_append( VERTEX2F(80 * 16,62 * 16) ); 
+        ft801_api_cmd_append( COLOR_MASK(0 ,0 ,0 ,0) ); 
+        ft801_api_cmd_append( TAG(1) ); 
+        ft801_api_cmd_append( VERTEX2F(60 * 16,50 * 16) ); 
+        ft801_api_cmd_append( VERTEX2F(100 * 16,62 * 16) ); 
+        ft801_api_cmd_track(60 * 16, 50 * 16, 40, 12, 1); 
+        
+        ft801_api_cmd_append(DISPLAY()) ;
+        ft801_api_cmd_append(CMD_SWAP);
+        ft801_api_cmd_flush();
+        
+#endif
 
     }        
 

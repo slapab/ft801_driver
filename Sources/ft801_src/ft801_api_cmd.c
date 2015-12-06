@@ -357,7 +357,7 @@ void ft801_api_cmd_bgcolor( const uint32_t color )
 
 
 
-void cmd_button( 
+void ft801_api_cmd_button( 
     int16_t x, 
     int16_t y, 
     int16_t w, 
@@ -390,4 +390,30 @@ void cmd_button(
     
     // append the string to the buffer
     _cmd_append_str( str );
+}
+
+
+
+void ft801_api_cmd_track( 
+    int16_t x, 
+    int16_t y, 
+    int16_t w, 
+    int16_t h, 
+    int16_t tag
+)
+{
+    ft801_api_cmd_append(CMD_TRACK);
+    
+    uint32_t tmp ;
+    // wrap x, y position
+    tmp = ((uint32_t)y << 16) | (uint32_t)x ;
+    ft801_api_cmd_append(tmp) ;
+    
+    // wrap w, h position
+    tmp = ((uint32_t)h << 16) | (uint32_t)w ;
+    ft801_api_cmd_append(tmp) ;
+    
+    // wrap the tag
+    tmp = (0U << 16) | (uint32_t)tag ;
+    ft801_api_cmd_append(tmp) ;
 }

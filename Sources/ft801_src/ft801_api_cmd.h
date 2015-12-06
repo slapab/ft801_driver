@@ -95,7 +95,7 @@ void ft801_api_cmd_bgcolor( const uint32_t color ) ;
 
     
     
-void cmd_button( 
+void ft801_api_cmd_button( 
     int16_t x, 
     int16_t y, 
     int16_t w, 
@@ -105,5 +105,13 @@ void cmd_button(
     const char* s
 );
 
+    
+void ft801_api_cmd_track( 
+    int16_t x, 
+    int16_t y, 
+    int16_t w, 
+    int16_t h, 
+    int16_t tag
+);
 
 #endif
