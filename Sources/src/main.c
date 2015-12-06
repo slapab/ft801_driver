@@ -222,7 +222,7 @@ int main(void)
         
 #ifdef _EXAMPLE_CMD
      
-        uint8_t cmd_buffer[3+(4*30)] ; // buffer for 30 commands ( 3 for address)
+        uint8_t cmd_buffer[3+(4*60)] ; // buffer for 30 commands ( 3 for address)
         
         ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
 //        ft801_api_cmd_append(CMD_DLSTART) ;
@@ -235,15 +235,29 @@ int main(void)
 //        ft801_api_cmd_append(END()) ;
 //        ft801_api_cmd_append(DISPLAY()) ;
 //        ft801_api_cmd_append(CMD_SWAP);
-       
+
+          // spinner example
+//        ft801_api_cmd_append(CMD_DLSTART) ;
+//        ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
+//        ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
+//        ft801_api_cmd_spinner(240,150, 1,0);
+        
+        // calibrate the touchscreen driver
+        //ft801_api_cmd_append(CMD_CALIBRATE);
+        //ft801_api_cmd_append(CMD_SWAP);
+        
+        // example with text
         ft801_api_cmd_append(CMD_DLSTART) ;
         ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
         ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
-        //ft801_api_cmd_spinner(240,150, 0,0);
-        ft801_api_cmd_spinner(240,150, 1,0);
-        
-        //ft801_api_cmd_append(CMD_CALIBRATE);
-        //ft801_api_cmd_append(CMD_SWAP);
+        ft801_api_cmd_append(COLOR_RGB(0,100,250));
+        ft801_api_cmd_text(240,136,30,FT_OPT_CENTER,"Slawomir Pabian") ;
+        ft801_api_cmd_fgcolor(COLOR_RGB(0,150,10) );
+        ft801_api_cmd_append(COLOR_RGB(255,255,255));
+        ft801_api_cmd_keys(240,156,100,30,26,FT_OPT_FLAT,"12345");
+        ft801_api_cmd_number(240,190,30,FT_OPT_SIGNED,-12) ;
+        ft801_api_cmd_append(DISPLAY()) ;
+        ft801_api_cmd_append(CMD_SWAP);
         ft801_api_cmd_flush();
        
 //        sleep(1);

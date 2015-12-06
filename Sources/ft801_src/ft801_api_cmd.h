@@ -71,9 +71,39 @@ void ft801_api_cmd_text(
     const char* str
 );
 
+    
+void ft801_api_cmd_number( 
+    int16_t x, 
+    int16_t y, 
+    int16_t font, 
+    uint16_t options, 
+    int32_t n
+); 
+    
+void ft801_api_cmd_keys(
+    int16_t x, 
+    int16_t y, 
+    int16_t w, 
+    int16_t h, 
+    int16_t font, 
+    uint16_t options, 
+    const char* s
+); 
 
+void ft801_api_cmd_fgcolor( const uint32_t color ) ;
+void ft801_api_cmd_bgcolor( const uint32_t color ) ;
 
-
+    
+    
+void cmd_button( 
+    int16_t x, 
+    int16_t y, 
+    int16_t w, 
+    int16_t h, 
+    int16_t font, 
+    uint16_t options, 
+    const char* s
+);
 
 
 #endif
