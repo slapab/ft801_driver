@@ -4,9 +4,12 @@
 
 #include "spi_with_interrupts.h"
 
+#include <signal.h>
+
 
 #include "ft801_gpu.h"    // FT801 registers
 #include "ft801_api.h"    // include api functions
+#include "gpio_exti.h"      // init the gpio - exti -> for gpu interrupt pin
 
 #include "ringBuffer_api.h"
 
@@ -15,6 +18,8 @@
 //#define _EXAMPLE_DL_TWO_BALLS
 //#define _EXAMPLE_CMD
 #define _EXAMPLE_TAG_TRACK
+#define _CALIBRATE_TOUCH
+
 
 // Declare the descryptor for ring buffer
 rbd_t rb_spi_rd_descr ;
@@ -24,6 +29,8 @@ volatile uint8_t pSPI_buff_rd[16]; // read ring buffer
 volatile uint8_t pSPI_buff_wr[16]; // write ring buffer
 
 volatile size_t cnt = 0 ;
+
+volatile sig_atomic_t gpu_int ;
 
 void SPI4_IRQHandler(void)
 {
@@ -57,10 +64,28 @@ void SPI4_IRQHandler(void)
     {
         ft801_spi_enable(false) ;
         // to do here
+        
     }
     
     
     NVIC_ClearPendingIRQ(SPI4_IRQn);
+}
+
+// #### EXTI FROM FT801 GPU IRQ PIN ####
+void EXTI4_IRQHandler(void)
+{
+    // test if was from GPU IT pin
+    if ( (EXTI->PR & EXTI_PR_PR4) )
+    {
+        // clear flag in the exti register
+        EXTI->PR |= EXTI_PR_PR4;
+        
+        gpu_int = 1;
+    }
+    
+   
+    // clear nvic flag
+    NVIC_ClearPendingIRQ(EXTI4_IRQn);
 }
 
 
@@ -102,6 +127,13 @@ int main(void)
         assert(!"Can not init ring buffer") ;
     }
     
+    // Configure the NVIC and IRQs
+    NVIC_ClearPendingIRQ(EXTI4_IRQn);
+    NVIC_EnableIRQ(EXTI4_IRQn) ;
+    
+    
+    // Configure the exti for gpu interrupt pin
+    ft801_gpu_exti_conf() ;
     
     // init the SPI
     gpu_init_spi() ;
@@ -139,6 +171,12 @@ int main(void)
         {
             ft801_api_enable_lcd(true);
         }
+        
+        // enable external interrupts
+        ft801_api_enable_it_src(FT_INT_CMDEMPTY /*| FT_INT_TAG*/);
+        ft801_api_enable_it_pin(true);
+        // clear any pending flags
+        ft801_api_read_it_flags() ;
         
         // set the backlight pwm duty 0-128
         ft801_spi_mem_wr8(REG_PWM_DUTY, 25) ;
@@ -266,11 +304,38 @@ int main(void)
         
 #endif
 
-
-#ifdef _EXAMPLE_TAG_TRACK
-        uint8_t cmd_buffer[3+(4*60)] ; // buffer for 30 commands ( 3 for address)
+        
+#ifdef _CALIBRATE_TOUCH
+         uint8_t cmd_buffer[3+(4*20)] ; // buffer for 30 commands ( 3 for address)
         
         ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
+        ft801_api_cmd_append(CMD_DLSTART) ;
+        ft801_api_cmd_append(CLEAR(1,1,1));
+        ft801_api_cmd_append(CMD_CALIBRATE);
+        //ft801_api_cmd_append(DISPLAY()) ;
+        ft801_api_cmd_append(CMD_SWAP);
+        ft801_api_cmd_flush();
+#endif
+        
+        while(1){
+            if ( gpu_int == 1 )
+            {
+                
+                gpu_int = 0 ;
+                
+                // read flags
+                uint8_t fl = ft801_api_read_it_flags() ;
+                if ( fl & FT_INT_CMDEMPTY ) {
+                    break ;
+                }
+                
+            }
+        }
+        
+#ifdef _EXAMPLE_TAG_TRACK
+        uint8_t cmd_buffer2[3+(4*60)] ; // buffer for 30 commands ( 3 for address)
+        
+        ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer2, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
         // example with text
         ft801_api_cmd_append(CMD_DLSTART) ;
         //ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
@@ -295,8 +360,23 @@ int main(void)
         ft801_api_cmd_append(CMD_SWAP);
         ft801_api_cmd_flush();
         
+        // enable TAG update interrupt
+        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG);
+        while(1){
+            if ( gpu_int == 1 )
+            {
+                
+                gpu_int = 0 ;
+                
+                // read flags
+                uint8_t fl = ft801_api_read_it_flags() ;
+                
+            }
+        }
+        
 #endif
-
+        
+    
     }        
 
 

@@ -35,7 +35,12 @@ void ft801_api_enable_it_src( const uint8_t mask );
 */
 void ft801_api_disable_it_src( const uint8_t mask );
 
-
+/**
+*   Read the interrupt register
+*   
+*   @note   Each enabled flag will be cleared by this read!
+*/
+uint8_t ft801_api_read_it_flags( void );
 
 
 

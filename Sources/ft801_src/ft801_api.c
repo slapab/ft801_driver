@@ -94,8 +94,7 @@ void ft801_api_enable_it_pin( bool enable )
 
 void ft801_api_enable_it_src( const uint8_t mask )
 {
-    ft801_spi_mem_wr8( REG_INT_MASK,
-            mask | ft801_spi_rd8(REG_INT_MASK) );
+    ft801_spi_mem_wr8( REG_INT_MASK, mask );
 }
 
 
@@ -104,4 +103,10 @@ void ft801_api_disable_it_src( const uint8_t mask )
 {
     ft801_spi_mem_wr8( REG_INT_MASK,
             ft801_spi_rd8(REG_INT_MASK) & (~mask) );
+}
+
+
+uint8_t ft801_api_read_it_flags( void )
+{
+    return ft801_spi_rd8( REG_INT_FLAGS );
 }
