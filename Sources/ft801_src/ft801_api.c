@@ -110,3 +110,24 @@ uint8_t ft801_api_read_it_flags( void )
 {
     return ft801_spi_rd8( REG_INT_FLAGS );
 }
+
+
+
+void ft801_api_ctouch_adjust( void )
+{
+    // This values are for Riverdi 4.3" Capacitive touchscreen
+    uint32_t A = 25592 ;
+    uint32_t B = 1637 ;
+    uint32_t C = 4293890945 ;
+    uint32_t D = 556 ;
+    uint32_t E = 24377 ;
+    uint32_t F = 4293991767 ;
+    
+    ft801_spi_mem_wr32(REG_CTOUCH_TRANSFORM_A, A);
+    ft801_spi_mem_wr32(REG_CTOUCH_TRANSFORM_B, B);
+    ft801_spi_mem_wr32(REG_CTOUCH_TRANSFORM_C, C);
+    ft801_spi_mem_wr32(REG_CTOUCH_TRANSFORM_D, D);
+    ft801_spi_mem_wr32(REG_CTOUCH_TRANSFORM_E, E);
+    ft801_spi_mem_wr32(REG_CTOUCH_TRANSFORM_F, F);
+    
+}

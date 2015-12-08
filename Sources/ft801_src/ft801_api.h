@@ -42,6 +42,10 @@ void ft801_api_disable_it_src( const uint8_t mask );
 */
 uint8_t ft801_api_read_it_flags( void );
 
+/**
+*   Send CTOUCH_TRANSFORM tables -> calibrate the Capacitive touchscreen
+*/
+void ft801_api_ctouch_adjust( void );
 
 
 #endif

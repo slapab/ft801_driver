@@ -22,7 +22,7 @@
     void ft801_spi_mem_wr8( const uint32_t addr,
                         const uint8_t data ) ;
     uint16_t ft801_spi_rd16( uint32_t addr ) ;
-    
+    uint32_t ft801_spi_rd32( uint32_t addr ) ;
         
     
     // just SPI sending

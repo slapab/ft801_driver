@@ -326,6 +326,42 @@ uint8_t ft801_spi_rd8( uint32_t addr )
 
 
 
+uint32_t ft801_spi_rd32( uint32_t addr )
+{
+    uint32_t tmp_out;
+    
+    // be sure that this is memory-read command style
+    addr = addr & 0xFF3FFFFF ;
+    
+    ft801_spi_enable(true);
+   
+    // write the address
+    _ft801_spi_write_address(addr);
+    _ft801_spi_wait_txempty();
+    
+    // write dummy byte - and read dummy byte
+    SPI_GPU->DR = 0x07 ;
+    _ft801_spi_wait_txempty();
+    _ft801_spi_wait_for_rx();
+    tmp_out = SPI_GPU->DR;
+    
+    // read proper value - little endian
+    tmp_out = 0;
+    for ( uint32_t i = 0; i < 4; ++i )
+    {
+        SPI_GPU->DR = 0x07 ;
+        
+        // get the byte
+         _ft801_spi_wait_txempty();
+         _ft801_spi_wait_for_rx();
+        tmp_out |= ((uint16_t)SPI_GPU->DR << (i<<3)) ;
+    }
+
+    ft801_spi_enable(false);
+    
+    return tmp_out ;
+}
+
 
 
 

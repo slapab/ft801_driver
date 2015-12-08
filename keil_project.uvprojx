@@ -351,7 +351,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -431,6 +431,11 @@
               <FileType>1</FileType>
               <FilePath>.\Sources\src\spi_with_interrutps.c</FilePath>
             </File>
+            <File>
+              <FileName>gpio_exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\src\gpio_exti.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -445,6 +450,11 @@
               <FileName>spi_with_interrupts.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\inc\spi_with_interrupts.h</FilePath>
+            </File>
+            <File>
+              <FileName>gpio_exti.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\inc\gpio_exti.h</FilePath>
             </File>
           </Files>
         </Group>

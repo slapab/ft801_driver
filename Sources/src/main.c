@@ -18,7 +18,7 @@
 //#define _EXAMPLE_DL_TWO_BALLS
 //#define _EXAMPLE_CMD
 #define _EXAMPLE_TAG_TRACK
-#define _CALIBRATE_TOUCH
+//#define _CALIBRATE_TOUCH
 
 
 // Declare the descryptor for ring buffer
@@ -164,9 +164,12 @@ int main(void)
     
     
     if ( ret == 0x7C )
-    {
+    {   
+        // send the transform matrix to ctouch registers
+        ft801_api_ctouch_adjust();
+        
         ft801_api_init_lcd() ;
-
+        
         if ( false == ft801_api_is_enabled() )
         {
             ft801_api_enable_lcd(true);
@@ -306,16 +309,17 @@ int main(void)
 
         
 #ifdef _CALIBRATE_TOUCH
-         uint8_t cmd_buffer[3+(4*20)] ; // buffer for 30 commands ( 3 for address)
+         uint8_t cmd_buffer[3+(4*40)] ; // buffer for 30 commands ( 3 for address)
         
         ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
         ft801_api_cmd_append(CMD_DLSTART) ;
         ft801_api_cmd_append(CLEAR(1,1,1));
+        
         ft801_api_cmd_append(CMD_CALIBRATE);
-        //ft801_api_cmd_append(DISPLAY()) ;
+        ft801_api_cmd_append(DISPLAY()) ;
         ft801_api_cmd_append(CMD_SWAP);
         ft801_api_cmd_flush();
-#endif
+
         
         while(1){
             if ( gpu_int == 1 )
@@ -326,42 +330,60 @@ int main(void)
                 // read flags
                 uint8_t fl = ft801_api_read_it_flags() ;
                 if ( fl & FT_INT_CMDEMPTY ) {
+                    // after calibration display the calibrated registers:
+                    // A-F
+                    
+                    ft801_api_cmd_append(CMD_DLSTART) ;
+                    ft801_api_cmd_append(CLEAR(1,1,1));
+                    ft801_api_cmd_number(0,0,25,0, ft801_spi_rd32( REG_CTOUCH_TRANSFORM_A )) ;
+                    ft801_api_cmd_number(0,30,25,0, ft801_spi_rd32( REG_CTOUCH_TRANSFORM_B )) ;
+                    ft801_api_cmd_number(0,60,25,0, ft801_spi_rd32( REG_CTOUCH_TRANSFORM_C )) ;
+                    ft801_api_cmd_number(0,90,25,0, ft801_spi_rd32( REG_CTOUCH_TRANSFORM_D )) ;
+                    ft801_api_cmd_number(0,120,25,0, ft801_spi_rd32( REG_CTOUCH_TRANSFORM_E )) ;
+                    ft801_api_cmd_number(0,150,25,0, ft801_spi_rd32( REG_CTOUCH_TRANSFORM_F )) ;
+                    ft801_api_cmd_append(DISPLAY()) ;
+                    ft801_api_cmd_append(CMD_SWAP);
+                    ft801_api_cmd_flush();
+                    
+                    
                     break ;
                 }
                 
             }
         }
+#endif 
+        
+        
+        
         
 #ifdef _EXAMPLE_TAG_TRACK
         uint8_t cmd_buffer2[3+(4*60)] ; // buffer for 30 commands ( 3 for address)
         
-        ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer2, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
-        // example with text
-        ft801_api_cmd_append(CMD_DLSTART) ;
-        //ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
-        //ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
+        ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer2, sizeof(cmd_buffer2)/sizeof(cmd_buffer2[0]));
         
-        ft801_api_cmd_append( CLEAR_COLOR_RGB(5, 45, 110) ); 
-        ft801_api_cmd_append( COLOR_RGB(255, 168, 64) ); 
-        ft801_api_cmd_append( CLEAR(1 ,1 ,1) ); 
-        ft801_api_cmd_append( BEGIN(FT_RECTS) ); 
-        ft801_api_cmd_append( VERTEX2F(60 * 16,50 * 16) ); 
-        ft801_api_cmd_append( VERTEX2F(100 * 16,62 * 16) ); 
-        ft801_api_cmd_append( COLOR_RGB(255, 0, 0) ); 
-        ft801_api_cmd_append( VERTEX2F(60 * 16,50 * 16) ); 
-        ft801_api_cmd_append( VERTEX2F(80 * 16,62 * 16) ); 
-        ft801_api_cmd_append( COLOR_MASK(0 ,0 ,0 ,0) ); 
-        ft801_api_cmd_append( TAG(1) ); 
-        ft801_api_cmd_append( VERTEX2F(60 * 16,50 * 16) ); 
-        ft801_api_cmd_append( VERTEX2F(100 * 16,62 * 16) ); 
-        ft801_api_cmd_track(60 * 16, 50 * 16, 40, 12, 1); 
+        
+        ft801_api_cmd_append(CMD_DLSTART) ;
+        
+        ft801_api_cmd_append( CLEAR_COLOR_RGB(5, 45, 110) );
+        ft801_api_cmd_append( COLOR_RGB(255, 168, 64) );
+        ft801_api_cmd_append( CLEAR(1 ,1 ,1) );
+        ft801_api_cmd_append( TAG(1) );
+        ft801_api_cmd_append( BEGIN(FT_POINTS) );
+        ft801_api_cmd_append( POINT_SIZE(20 * 16) );
+        ft801_api_cmd_append( VERTEX2F(80 * 16, 60 * 16) );
+        //ft801_api_cmd_track(80 * 16, 60 * 16, 1, 1, 1);
+        ft801_api_cmd_append( TAG(20) ) ;
+        ft801_api_cmd_append( VERTEX2F(280 * 16, 60 * 16) );
+        //ft801_api_cmd_track(280 * 16, 60 * 16, 1, 1, 1);
+        ft801_api_cmd_append(END()) ;
+       
         
         ft801_api_cmd_append(DISPLAY()) ;
         ft801_api_cmd_append(CMD_SWAP);
         ft801_api_cmd_flush();
         
         // enable TAG update interrupt
-        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG);
+        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG | FT_INT_CONVCOMPLETE);
         while(1){
             if ( gpu_int == 1 )
             {
@@ -370,7 +392,26 @@ int main(void)
                 
                 // read flags
                 uint8_t fl = ft801_api_read_it_flags() ;
-                
+                if ( fl & FT_INT_TAG )
+                {
+                    int t ;
+                    if ( (t = ft801_spi_rd8( REG_TOUCH_TAG )) == 1 ) {
+                        volatile int b = 0 ;
+                        b = t;
+                    }
+                    else {
+                        volatile int c = 1 ;
+                        c = t;
+                    }
+                }
+                else if ( fl & FT_INT_CONVCOMPLETE )
+                {
+                    volatile int d = 23;
+                    d++ ;
+                    int a = d ;
+                    d-- ;
+                }
+            
             }
         }
         
