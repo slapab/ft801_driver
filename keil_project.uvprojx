@@ -504,6 +504,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>FT801_it_src</GroupName>
+          <Files>
+            <File>
+              <FileName>ft801_it_ringbuffer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_it_api\ft801_it_ringbuffer.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft801_it_ringbuffer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_it_api\ft801_it_ringbuffer.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
         <Group>
