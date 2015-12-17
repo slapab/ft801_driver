@@ -1,4 +1,4 @@
-#include "ft801_it_ringbuffer.h"
+#include "ft80x_it_ringbuffer.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>

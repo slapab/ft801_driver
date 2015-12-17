@@ -1,5 +1,5 @@
-#ifndef _FT801_IT_RINGBUFFER_
-#define _FT801_IT_RINGBUFFER_
+#ifndef _FT80X_IT_RINGBUFFER_H_
+#define _FT80X_IT_RINGBUFFER_H_
 
 #include <stdbool.h>
 #include <stddef.h>

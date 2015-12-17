@@ -507,14 +507,34 @@
           <GroupName>FT801_it_src</GroupName>
           <Files>
             <File>
-              <FileName>ft801_it_ringbuffer.c</FileName>
+              <FileName>ft80x_it_ringbuffer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Sources\ft801_src\ft801_it_api\ft801_it_ringbuffer.c</FilePath>
+              <FilePath>.\Sources\ft801_src\ft801_it_api\ft80x_it_ringbuffer.c</FilePath>
             </File>
             <File>
-              <FileName>ft801_it_ringbuffer.h</FileName>
+              <FileName>ft80x_it_ringbuffer.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Sources\ft801_src\ft801_it_api\ft801_it_ringbuffer.h</FilePath>
+              <FilePath>.\Sources\ft801_src\ft801_it_api\ft80x_it_ringbuffer.h</FilePath>
+            </File>
+            <File>
+              <FileName>ft80x_it_api.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_it_api\ft80x_it_api.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft80x_it_api.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_it_api\ft80x_it_api.h</FilePath>
+            </File>
+            <File>
+              <FileName>ft80x_it_api_cmd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_it_api\ft80x_it_api_cmd.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft80x_it_api_cmd.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_it_api\ft80x_it_api_cmd.h</FilePath>
             </File>
           </Files>
         </Group>

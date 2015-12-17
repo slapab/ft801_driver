@@ -477,8 +477,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Sources\ft801_src\ft801_it_api\ft801_it_ringbuffer.c</PathWithFileName>
-      <FilenameWithoutPath>ft801_it_ringbuffer.c</FilenameWithoutPath>
+      <PathWithFileName>.\Sources\ft801_src\ft801_it_api\ft80x_it_ringbuffer.c</PathWithFileName>
+      <FilenameWithoutPath>ft80x_it_ringbuffer.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -489,8 +489,56 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Sources\ft801_src\ft801_it_api\ft801_it_ringbuffer.h</PathWithFileName>
-      <FilenameWithoutPath>ft801_it_ringbuffer.h</FilenameWithoutPath>
+      <PathWithFileName>.\Sources\ft801_src\ft801_it_api\ft80x_it_ringbuffer.h</PathWithFileName>
+      <FilenameWithoutPath>ft80x_it_ringbuffer.h</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>4</GroupNumber>
+      <FileNumber>18</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\Sources\ft801_src\ft801_it_api\ft80x_it_api.c</PathWithFileName>
+      <FilenameWithoutPath>ft80x_it_api.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>4</GroupNumber>
+      <FileNumber>19</FileNumber>
+      <FileType>5</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\Sources\ft801_src\ft801_it_api\ft80x_it_api.h</PathWithFileName>
+      <FilenameWithoutPath>ft80x_it_api.h</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>4</GroupNumber>
+      <FileNumber>20</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\Sources\ft801_src\ft801_it_api\ft80x_it_api_cmd.c</PathWithFileName>
+      <FilenameWithoutPath>ft80x_it_api_cmd.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>4</GroupNumber>
+      <FileNumber>21</FileNumber>
+      <FileType>5</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\Sources\ft801_src\ft801_it_api\ft80x_it_api_cmd.h</PathWithFileName>
+      <FilenameWithoutPath>ft80x_it_api_cmd.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
