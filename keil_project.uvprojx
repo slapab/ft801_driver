@@ -373,7 +373,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>.\Sources\inc;.\Sources\ft801_src</IncludePath>
+              <IncludePath>.\Sources\inc;.\Sources\ft801_src;.\Sources\ft801_src\ft801_it_api</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

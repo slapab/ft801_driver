@@ -4,9 +4,19 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
+/**
+*   This function must be called on each new command list to send. It copies the
+*   destination address to the first three bytes in the ring buffer.
+*   
+*   @param addr the destination address ( which points to the specific chip mem.
+*           location )
+*/
+void ft801_api_cmd_prepare_it( uint32_t addr );
+
 /**
 *   This function appends CMD command to the buffer.
-
+*
 *   @return false if there is no place in the buffer
 */
 bool ft801_api_cmd_append_it( const uint32_t data );

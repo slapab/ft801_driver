@@ -8,14 +8,14 @@
 // the ring buffer structure
 struct ft80x_it_ring_buffer
 {
-    uint8_t  buf[ FT801_RINGBUFFER_SIZE ];
+    volatile uint8_t  buf[ FT801_RINGBUFFER_SIZE ];
     volatile sig_atomic_t head;
     volatile sig_atomic_t tail;
 };
 
 
 // private instance of ring buffer
-static struct ft80x_it_ring_buffer ringBuffer;
+static volatile struct ft80x_it_ring_buffer ringBuffer;
 
 
 
@@ -111,10 +111,17 @@ bool ft80x_it_ring_buffer_get( uint8_t * const data )
         return false ;
     
     sig_atomic_t tail_idx = ringBuffer.tail & ( FT801_RINGBUFFER_SIZE -1 );
-    *data = ringBuffer.buf[tail_idx] ;
+    uint8_t tmp = ringBuffer.buf[tail_idx] ;
+    *data = tmp ;
     
     ++ringBuffer.tail ;
     
     return true ;
 }
 
+
+
+void ft80x_it_ring_buffer_reset(void)
+{
+    ringBuffer.head = ringBuffer.tail = 0 ;
+}

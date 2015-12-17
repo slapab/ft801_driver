@@ -9,16 +9,21 @@
 
 #include "ft801_gpu.h"    // FT801 registers
 #include "ft801_api.h"    // include api functions
-#include "gpio_exti.h"      // init the gpio - exti -> for gpu interrupt pin
+#include "gpio_exti.h"    // init the gpio - exti -> for gpu interrupt pin
 
-#include "ringBuffer_api.h"
+
+#include "ft80x_it_api.h"
+
+//#include "ringBuffer_api.h"
 
 #include <assert.h>
 
 //#define _EXAMPLE_DL_TWO_BALLS
 //#define _EXAMPLE_CMD
-#define _EXAMPLE_TAG_TRACK
+//#define _EXAMPLE_TAG_TRACK
 //#define _CALIBRATE_TOUCH
+
+#define _TEST_IT_API
 
 
 // Declare the descryptor for ring buffer
@@ -32,44 +37,46 @@ volatile size_t cnt = 0 ;
 
 volatile sig_atomic_t gpu_int ;
 
+void enable_spi( bool enable )
+{
+    if ( true == enable )
+        SPI4->CR1 |= SPI_CR1_SPE ;
+    else
+        SPI4->CR1 &= ~(SPI_CR1_SPE);
+}
+
+void enable_spi_interrupt( bool enable )
+{
+    NVIC_ClearPendingIRQ(SPI4_IRQn);
+    if ( true == enable )
+        NVIC_EnableIRQ(SPI4_IRQn) ;
+    else
+        NVIC_DisableIRQ(SPI4_IRQn) ;
+}
+
+
 void SPI4_IRQHandler(void)
 {
     // Receive
     if( READ_BIT(SPI4->SR, SPI_SR_RXNE) )
     {
-        uint8_t tmp = SPI4->DR;
-        // Put to the buffer
-//        cnt++ ;
-//        if ( cnt > 3 )
-            ring_buffer_put(rb_spi_rd_descr, (const uint8_t*)&tmp);
+        uint8_t tmp = SPI4->DR ;
     }
     
     
     // Transmit
     if ( READ_BIT( SPI4->SR, SPI_SR_TXE) )
     {
-        uint8_t tmp = 0 ;
-        // get from buffer and put to the SPI tx register only if were something
-        if (ring_buffer_get( rb_spi_wr_descr, &tmp) )
+        if ( true == ft80x_it_rountine( (uint8_t*)&(SPI4->DR) ) )
         {
-            if ( (SPI4->CR1 & SPI_CR1_SPE) )
-                SPI4->DR = tmp ;
+            NVIC_ClearPendingIRQ(SPI4_IRQn) ;
         }
     }
     
     
-    // if SPI operation has been ended then disable the SPI
-    // todo -> inform that transmision has been stoped
-    if ( ring_buffer_get_capacity(rb_spi_wr_descr) == 0 )//!(SPI4->SR & SPI_SR_BSY))
-    {
-        ft801_spi_enable(false) ;
-        // to do here
-        
-    }
-    
-    
-    NVIC_ClearPendingIRQ(SPI4_IRQn);
 }
+
+
 
 // #### EXTI FROM FT801 GPU IRQ PIN ####
 void EXTI4_IRQHandler(void)
@@ -139,8 +146,8 @@ int main(void)
     gpu_init_spi() ;
     
     
-//    NVIC_EnableIRQ(SPI4_IRQn) ;
-//    ft801_spi_hcmd_wr_it(FT_HOST_CMD_CLKEXT, rb_spi_wr_descr) ;
+    //NVIC_EnableIRQ(SPI4_IRQn) ;
+
     
     
     
@@ -416,7 +423,25 @@ int main(void)
         }
         
 #endif
+       
+
+#ifdef _TEST_IT_API
         
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, ft801_spi_rd16 );
+        
+        
+        ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
+        
+        ft801_api_cmd_append_it(CMD_DLSTART) ;
+        ft801_api_cmd_append_it(CLEAR_COLOR_RGB(50, 50, 55));
+        ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
+        ft801_api_cmd_append_it(COLOR_RGB(0,100,250));
+        //ft801_api_cmd_text_it(240,136,30,FT_OPT_CENTER,"Slawomir Pabian") ;
+        ft801_api_cmd_append_it(DISPLAY()) ;
+        ft801_api_cmd_append_it(CMD_SWAP);
+        
+
+#endif        
     
     }        
 

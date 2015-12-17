@@ -20,5 +20,6 @@ bool ft80x_it_ring_buffer_isfull( void );
 bool ft80x_it_ring_buffer_isempty( void );
 size_t ft80x_it_ring_buffer_fullness(void) ;
 size_t ft80x_it_ring_buffer_freespace(void) ;
+void ft80x_it_ring_buffer_reset(void);
 
 #endif

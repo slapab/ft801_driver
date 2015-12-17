@@ -8,10 +8,47 @@
 #include <stdint.h>
 #include <string.h>
 
+
+// ###### DECLARE SHARED API FUNCTIONS ######
+
+// FROM ft80x_it_api.c/h
+void ft80x_it_start_tx();
+void ft80x_it_spi_enable_force( bool enable );
+uint16_t ft80x_spi_read_16bits( const uint32_t addr );
+
+
+
+
+
+
 // ##### DECLARATION OF LOCAL STATIC FUNCTIONS #####
 static void _cmd_append_str( const char * str ) ;
 
 
+
+
+
+
+// NOTE : this function breaks currently working transmission !
+// NOTE : this function not quaranties that CMD FIFO inside ft80x chip is empty,
+//          it just assumes that.
+void ft801_api_cmd_prepare_it( uint32_t addr )
+{
+    // disable an SPI
+    ft80x_it_spi_enable_force(false);
+    // clear internal ringbuffer
+    ft80x_it_ring_buffer_reset();
+    
+    // read the current offset of chip's CMD Circular buffer
+    uint32_t offset = ft80x_spi_read_16bits( REG_CMD_WRITE ) ;
+    
+    // update write address
+    addr += offset ;
+    // store the three bytes ( MSB -1, MSB-2, LSB ) in the ring buffer
+    ft80x_it_ring_buffer_append((uint8_t)(addr>>16));
+    ft80x_it_ring_buffer_append((uint8_t)(addr>>8));
+    ft80x_it_ring_buffer_append((uint8_t)addr);
+}
 
 bool ft801_api_cmd_append_it( const uint32_t data )
 {
@@ -22,9 +59,8 @@ bool ft801_api_cmd_append_it( const uint32_t data )
     ft80x_it_ring_buffer_append((uint8_t)(data >> 16)) ;
     ft80x_it_ring_buffer_append((uint8_t)(data >> 24)) ;
     
-    // check if SPI has been started
-    // todo
-    
+    ft80x_it_start_tx();
+       
     return true;
 }
 \
@@ -248,11 +284,17 @@ void ft801_api_cmd_track_it(
 
 // ###### LOCAL HELP FUNCTIONS ######
 
+void _cmd_append_byte( const uint8_t data )
+{
+    ft80x_it_ring_buffer_append( data );
+}
+
+
 
 void _cmd_append_str( const char * str )
 {
 
-    size_t str_len = strlen( str ) + 1;
+    size_t str_len = strlen( str ) + 1; // +1 for null char
     size_t str_padd = 0;
     
     if ( 0 < (str_len % 4) )
@@ -260,17 +302,19 @@ void _cmd_append_str( const char * str )
     
     
     // put string into buffer
-    for( uint8_t* c = (uint8_t*)str; *c ; ++c )
-    {
-        ft801_api_cmd_append_it( *c ) ;
-    }
+    ft80x_it_ring_buffer_appendBuff( str, str_len );
+    
+//    for( uint8_t* c = (uint8_t*)str; *c ; ++c )
+//    {
+//       ft80x_it_ring_buffer_append( *c ) ;
+//    }
     // append the NULL character
-    ft801_api_cmd_append_it ('\0') ;
+   // ft801_api_cmd_append_it ('\0') ;
     
     // append the padding bytes
     for ( size_t i = 0 ; i < str_padd; ++i )
     {
-        ft801_api_cmd_append_it (0) ;
+        ft80x_it_ring_buffer_append(0) ;
     }        
     
 }
