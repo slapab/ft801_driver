@@ -12,8 +12,9 @@
 // ###### DECLARE SHARED API FUNCTIONS ######
 
 // FROM ft80x_it_api.c/h
-void ft80x_it_start_tx_cmds( size_t rb_fullness );
-bool ft80x_it_reset( bool force );
+void ft80x_it_cmds_append_finished( size_t rb_fullness );
+void ft80x_it_cmds_start_tx( void ) ;
+bool ft80x_it_cmds_reset( bool force );
 uint16_t ft80x_spi_read_16bits( const uint32_t addr );
 
 
@@ -27,7 +28,7 @@ static void _cmd_append_str( const char * str ) ;
 
 // ##### DECLARE LOCAL (STATIC) GLOBALS #####
 static size_t reg_cmd_write_val ;
-
+static size_t bytes_in_transaction ; // how many cmd bytes was appended to the buffer
 
 
 
@@ -37,9 +38,11 @@ static size_t reg_cmd_write_val ;
 void ft801_api_cmd_prepare_it( uint32_t addr )
 {
     // reset state of it_engine
-    ft80x_it_reset(true);
+    ft80x_it_cmds_reset(true);
     // clear internal ringbuffer
     ft80x_it_ring_buffer_reset();
+    
+        bytes_in_transaction = 0 ;
     
     // read the current offset of chip's CMD Circular buffer
     reg_cmd_write_val = ft80x_spi_read_16bits( REG_CMD_WRITE ) ;
@@ -53,32 +56,39 @@ void ft801_api_cmd_prepare_it( uint32_t addr )
     ft80x_it_ring_buffer_append((uint8_t)addr);
 }
 
+
+
+
+
 bool ft801_api_cmd_append_it( const uint32_t data )
 {
-    
     // copy bytes into buffer in the little - endian format
     ft80x_it_ring_buffer_append_32b_ld( data );
     
-    //ft80x_it_start_tx_cmds(0);
-       
+        bytes_in_transaction += 4 ;
+    
+    ft80x_it_cmds_start_tx();
     return true;
 }
 \
+
+
+
 void ft801_api_cmd_flush_it(void)
 {   
     // Calculate index for chip's cmds fifo:
-    
-    // get the number of commands stored in ringbuffer
-    size_t fullness = ft80x_it_ring_buffer_fullness();
+       
+    size_t fullness = bytes_in_transaction ;
     // Prepare value for REG_CMD_WRITE
-    fullness = ( fullness - 3)/*dicard 3B for address*/ + reg_cmd_write_val ;
-    // handle of chip cmd's fifo size
-    fullness %= FT_CMDFIFO_SIZE;
-    
+    fullness += reg_cmd_write_val ;
+    // Handle of chip cmd's fifo size
+    fullness %= FT_CMDFIFO_SIZE ;
     
     // pass this value and start sending cmds
-    ft80x_it_start_tx_cmds( fullness ) ;
+    ft80x_it_cmds_append_finished( fullness ) ;
 }
+
+
 
 
 void ft801_api_cmd_text_it(
@@ -302,11 +312,12 @@ void ft801_api_cmd_track_it(
 void _cmd_append_byte( const uint8_t data )
 {
     ft80x_it_ring_buffer_append( data );
+        bytes_in_transaction += 1;
 }
 
 
 
-void _cmd_append_str( const char * str )
+static void _cmd_append_str( const char * str )
 {
 
     size_t str_len = strlen( str ) + 1; // +1 for null char
@@ -332,4 +343,5 @@ void _cmd_append_str( const char * str )
         ft80x_it_ring_buffer_append(0) ;
     }        
     
+        bytes_in_transaction += str_len + str_padd ;
 }

@@ -54,6 +54,10 @@ void enable_spi_interrupt( bool enable )
         NVIC_DisableIRQ(SPI4_IRQn) ;
 }
 
+void set_spi_pending_int(void)
+{
+    NVIC_SetPendingIRQ(SPI4_IRQn) ;
+}
 
 void SPI4_IRQHandler(void)
 {
@@ -69,10 +73,11 @@ void SPI4_IRQHandler(void)
     {
         if ( true == ft80x_it_rountine( (uint8_t*)&(SPI4->DR) ) )
         {
-            NVIC_ClearPendingIRQ(SPI4_IRQn) ;
+             NVIC_ClearPendingIRQ(SPI4_IRQn) ;
         }
     }
     
+   
     
 }
 
@@ -370,64 +375,75 @@ int main(void)
         
         
         ft801_api_cmd_append(CMD_DLSTART) ;
-        
-        ft801_api_cmd_append( CLEAR_COLOR_RGB(5, 45, 110) );
-        ft801_api_cmd_append( COLOR_RGB(255, 168, 64) );
-        ft801_api_cmd_append( CLEAR(1 ,1 ,1) );
-        ft801_api_cmd_append( TAG(1) );
-        ft801_api_cmd_append( BEGIN(FT_POINTS) );
-        ft801_api_cmd_append( POINT_SIZE(20 * 16) );
-        ft801_api_cmd_append( VERTEX2F(80 * 16, 60 * 16) );
-        //ft801_api_cmd_track(80 * 16, 60 * 16, 1, 1, 1);
-        ft801_api_cmd_append( TAG(20) ) ;
-        ft801_api_cmd_append( VERTEX2F(280 * 16, 60 * 16) );
-        //ft801_api_cmd_track(280 * 16, 60 * 16, 1, 1, 1);
-        ft801_api_cmd_append(END()) ;
-       
-        
+        ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
+        ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
+        ft801_api_cmd_append(COLOR_RGB(0,100,250));
+        //ft801_api_cmd_text(240,136,30,FT_OPT_CENTER,"Slawomir Pabian") ;
+
         ft801_api_cmd_append(DISPLAY()) ;
         ft801_api_cmd_append(CMD_SWAP);
+
         ft801_api_cmd_flush();
         
-        // enable TAG update interrupt
-        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG | FT_INT_CONVCOMPLETE);
-        while(1){
-            if ( gpu_int == 1 )
-            {
-                
-                gpu_int = 0 ;
-                
-                // read flags
-                uint8_t fl = ft801_api_read_it_flags() ;
-                if ( fl & FT_INT_TAG )
-                {
-                    int t ;
-                    if ( (t = ft801_spi_rd8( REG_TOUCH_TAG )) == 1 ) {
-                        volatile int b = 0 ;
-                        b = t;
-                    }
-                    else {
-                        volatile int c = 1 ;
-                        c = t;
-                    }
-                }
-                else if ( fl & FT_INT_CONVCOMPLETE )
-                {
-                    volatile int d = 23;
-                    d++ ;
-                    int a = d ;
-                    d-- ;
-                }
-            
-            }
-        }
+//        ft801_api_cmd_append(CMD_DLSTART) ;
+//        
+//        ft801_api_cmd_append( CLEAR_COLOR_RGB(5, 45, 110) );
+//        ft801_api_cmd_append( COLOR_RGB(255, 168, 64) );
+//        ft801_api_cmd_append( CLEAR(1 ,1 ,1) );
+//        ft801_api_cmd_append( TAG(1) );
+//        ft801_api_cmd_append( BEGIN(FT_POINTS) );
+//        ft801_api_cmd_append( POINT_SIZE(20 * 16) );
+//        ft801_api_cmd_append( VERTEX2F(80 * 16, 60 * 16) );
+//        //ft801_api_cmd_track(80 * 16, 60 * 16, 1, 1, 1);
+//        ft801_api_cmd_append( TAG(20) ) ;
+//        ft801_api_cmd_append( VERTEX2F(280 * 16, 60 * 16) );
+//        //ft801_api_cmd_track(280 * 16, 60 * 16, 1, 1, 1);
+//        ft801_api_cmd_append(END()) ;
+//       
+//        
+//        ft801_api_cmd_append(DISPLAY()) ;
+//        ft801_api_cmd_append(CMD_SWAP);
+//        ft801_api_cmd_flush();
+//        
+//        // enable TAG update interrupt
+//        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG | FT_INT_CONVCOMPLETE);
+//        while(1){
+//            if ( gpu_int == 1 )
+//            {
+//                
+//                gpu_int = 0 ;
+//                
+//                // read flags
+//                uint8_t fl = ft801_api_read_it_flags() ;
+//                if ( fl & FT_INT_TAG )
+//                {
+//                    int t ;
+//                    if ( (t = ft801_spi_rd8( REG_TOUCH_TAG )) == 1 ) {
+//                        volatile int b = 0 ;
+//                        b = t;
+//                    }
+//                    else {
+//                        volatile int c = 1 ;
+//                        c = t;
+//                    }
+//                }
+//                else if ( fl & FT_INT_CONVCOMPLETE )
+//                {
+//                    volatile int d = 23;
+//                    d++ ;
+//                    int a = d ;
+//                    d-- ;
+//                }
+//            
+//            }
+//        }
         
 #endif
        
 
 #ifdef _TEST_IT_API
         
-        ft80x_it_api_init( enable_spi, enable_spi_interrupt, ft801_spi_rd16 );
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
         
         
         ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
@@ -436,7 +452,7 @@ int main(void)
         ft801_api_cmd_append_it(CLEAR_COLOR_RGB(50, 50, 55));
         ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
         ft801_api_cmd_append_it(COLOR_RGB(0,100,250));
-        //ft801_api_cmd_text_it(240,136,30,FT_OPT_CENTER,"Slawomir Pabian") ;
+        ft801_api_cmd_text_it(240,136,30,FT_OPT_CENTER,"Slawomir Pabian to jest mistrz ;-)") ;
 
         ft801_api_cmd_append_it(DISPLAY()) ;
         ft801_api_cmd_append_it(CMD_SWAP);
@@ -444,7 +460,28 @@ int main(void)
         ft801_api_cmd_flush_it();
 
 
-        while ( false == ft80x_it_check() ) ;
+        while ( false == ft80x_it_check() );
+        
+        
+        // the second screen
+        sleep(23) ;
+        sleep(23) ;
+        
+        ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
+        
+        ft801_api_cmd_append_it(CMD_DLSTART) ;
+        ft801_api_cmd_append_it(CLEAR_COLOR_RGB(50, 50, 55));
+        ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
+        ft801_api_cmd_append_it(COLOR_RGB(50,50,250));
+        ft801_api_cmd_text_it(240,136,30,FT_OPT_CENTER,"Master of masters!") ;
+
+        ft801_api_cmd_append_it(DISPLAY()) ;
+        ft801_api_cmd_append_it(CMD_SWAP);
+
+        ft801_api_cmd_flush_it();
+        
+        while ( false == ft80x_it_check() );
+        
 #endif        
     
     }        
