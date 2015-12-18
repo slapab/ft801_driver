@@ -91,14 +91,14 @@ bool ft80x_it_ring_buffer_isempty( void )
 size_t ft80x_it_ring_buffer_fullness(void)
 {
     size_t fullness = (ringBuffer.head - ringBuffer.tail) & (FT801_RINGBUFFER_SIZE-1);
-    return ++fullness ; // add one to wrap this implementation of ringBuffer
+    return fullness ;
 }
 
 
 size_t ft80x_it_ring_buffer_freespace(void)
 {   
     size_t fullness = ft80x_it_ring_buffer_fullness() ;
-    return FT801_RINGBUFFER_SIZE - fullness ;
+    return FT801_RINGBUFFER_SIZE - fullness - 1 ; // -1 to handle this implementation of ring buffer
 }
 
 
