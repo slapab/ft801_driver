@@ -57,12 +57,9 @@ bool ft801_api_cmd_append_it( const uint32_t data )
 {
     
     // copy bytes into buffer in the little - endian format
-    ft80x_it_ring_buffer_append((uint8_t)data);
-    ft80x_it_ring_buffer_append((uint8_t)(data >> 8)) ;
-    ft80x_it_ring_buffer_append((uint8_t)(data >> 16)) ;
-    ft80x_it_ring_buffer_append((uint8_t)(data >> 24)) ;
+    ft80x_it_ring_buffer_append_32b_ld( data );
     
-    //ft80x_it_start_tx();
+    //ft80x_it_start_tx_cmds(0);
        
     return true;
 }

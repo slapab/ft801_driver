@@ -15,6 +15,7 @@
 
 bool ft80x_it_ring_buffer_appendBuff( const char * const data, const size_t len );
 bool ft80x_it_ring_buffer_append( const uint8_t data );
+bool ft80x_it_ring_buffer_append_32b_ld( const uint32_t data );
 bool ft80x_it_ring_buffer_get( uint8_t * const data );
 bool ft80x_it_ring_buffer_isfull( void );
 bool ft80x_it_ring_buffer_isempty( void );

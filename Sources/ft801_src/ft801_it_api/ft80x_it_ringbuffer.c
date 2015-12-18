@@ -71,6 +71,30 @@ bool ft80x_it_ring_buffer_append( const uint8_t data )
 }
 
 
+// 32bit little-endian
+bool ft80x_it_ring_buffer_append_32b_ld( const uint32_t data )
+{
+    if ( 4 > ft80x_it_ring_buffer_freespace() )
+        return false ;
+    
+    
+    // instead of modulo operation -> but the size must be power of 2
+    sig_atomic_t head_idx = ringBuffer.head & (FT801_RINGBUFFER_SIZE-1); 
+    for ( size_t i = 0 ; i < 4 ; ++i )
+    {
+        ringBuffer.buf[head_idx] = (uint8_t)(data >> (i<<3)/*shift by, 0,8,16,24*/) ;
+        // instead of modulo operation -> but the size must be power of 2
+        head_idx = (head_idx+1) & (FT801_RINGBUFFER_SIZE-1) ;
+    }
+      
+    // update index
+    ringBuffer.head += 4;
+    
+    return true ;
+}
+
+
+
 // full if head+1 == tail
 // empty if tail == head
 bool ft80x_it_ring_buffer_isfull( void )
