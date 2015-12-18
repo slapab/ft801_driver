@@ -12,10 +12,9 @@
 // ###### DECLARE SHARED API FUNCTIONS ######
 
 // FROM ft80x_it_api.c/h
-void ft80x_it_start_tx();
-void ft80x_it_spi_enable_force( bool enable );
+void ft80x_it_start_tx_cmds( size_t rb_fullness );
+bool ft80x_it_reset( bool force );
 uint16_t ft80x_spi_read_16bits( const uint32_t addr );
-
 
 
 
@@ -26,6 +25,9 @@ static void _cmd_append_str( const char * str ) ;
 
 
 
+// ##### DECLARE LOCAL (STATIC) GLOBALS #####
+static size_t reg_cmd_write_val ;
+
 
 
 
@@ -34,16 +36,17 @@ static void _cmd_append_str( const char * str ) ;
 //          it just assumes that.
 void ft801_api_cmd_prepare_it( uint32_t addr )
 {
-    // disable an SPI
-    ft80x_it_spi_enable_force(false);
+    // reset state of it_engine
+    ft80x_it_reset(true);
     // clear internal ringbuffer
     ft80x_it_ring_buffer_reset();
     
     // read the current offset of chip's CMD Circular buffer
-    uint32_t offset = ft80x_spi_read_16bits( REG_CMD_WRITE ) ;
+    reg_cmd_write_val = ft80x_spi_read_16bits( REG_CMD_WRITE ) ;
     
     // update write address
-    addr += offset ;
+    addr += reg_cmd_write_val ;
+    addr |= 0x00800000 ; // set to notify that this is write addr
     // store the three bytes ( MSB -1, MSB-2, LSB ) in the ring buffer
     ft80x_it_ring_buffer_append((uint8_t)(addr>>16));
     ft80x_it_ring_buffer_append((uint8_t)(addr>>8));
@@ -59,11 +62,26 @@ bool ft801_api_cmd_append_it( const uint32_t data )
     ft80x_it_ring_buffer_append((uint8_t)(data >> 16)) ;
     ft80x_it_ring_buffer_append((uint8_t)(data >> 24)) ;
     
-    ft80x_it_start_tx();
+    //ft80x_it_start_tx();
        
     return true;
 }
 \
+void ft801_api_cmd_flush_it(void)
+{   
+    // Calculate index for chip's cmds fifo:
+    
+    // get the number of commands stored in ringbuffer
+    size_t fullness = ft80x_it_ring_buffer_fullness();
+    // Prepare value for REG_CMD_WRITE
+    fullness = ( fullness - 3)/*dicard 3B for address*/ + reg_cmd_write_val ;
+    // handle of chip cmd's fifo size
+    fullness %= FT_CMDFIFO_SIZE;
+    
+    
+    // pass this value and start sending cmds
+    ft80x_it_start_tx_cmds( fullness ) ;
+}
 
 
 void ft801_api_cmd_text_it(

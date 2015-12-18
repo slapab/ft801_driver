@@ -437,10 +437,14 @@ int main(void)
         ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
         ft801_api_cmd_append_it(COLOR_RGB(0,100,250));
         //ft801_api_cmd_text_it(240,136,30,FT_OPT_CENTER,"Slawomir Pabian") ;
+
         ft801_api_cmd_append_it(DISPLAY()) ;
         ft801_api_cmd_append_it(CMD_SWAP);
-        
 
+        ft801_api_cmd_flush_it();
+
+
+        while ( false == ft80x_it_check() ) ;
 #endif        
     
     }        

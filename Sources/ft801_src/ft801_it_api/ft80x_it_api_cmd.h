@@ -22,6 +22,8 @@ void ft801_api_cmd_prepare_it( uint32_t addr );
 bool ft801_api_cmd_append_it( const uint32_t data );
 
 
+void ft801_api_cmd_flush_it(void) ;
+
 
 // ######### CHIP SPECIFIC WIDGETS API ##########
 
@@ -83,5 +85,5 @@ void ft801_api_cmd_track_it(
     int16_t h, 
     int16_t tag
 );
-\
+
 #endif

@@ -21,7 +21,7 @@ static volatile struct ft80x_it_ring_buffer ringBuffer;
 
 
 // api to handle the ring buffer
-bool ft80x_it_ring_buffer_appendBuff( const uint8_t * const data, const size_t len )
+bool ft80x_it_ring_buffer_appendBuff( const char * const data, const size_t len )
 {
     
     if ( !ft80x_it_ring_buffer_isfull() )

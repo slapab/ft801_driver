@@ -14,7 +14,7 @@ typedef uint16_t (*spi_rd_16_TypeDef)( const uint32_t );
 
 
 bool ft80x_it_rountine(uint8_t * const dst );
-
+bool ft80x_it_check(void);
 
 void ft80x_it_api_init( 
     pf_en_TypeDef       fptr_spi_en,
