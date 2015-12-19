@@ -111,6 +111,10 @@ bool ft80x_it_check(void)
     {
         // Tell the chip to start processing commands
         
+        
+        // set buffer status
+        _thisData.cmd_buffer_status = AppendStarted ;
+        
         // Append dst address to the buffer -> MSB first
         uint32_t addr = REG_CMD_WRITE ;
         addr |= 0x00800000 ;    // Set bit that this will be write transaction
@@ -136,6 +140,7 @@ bool ft80x_it_check(void)
         
         
         return false ;
+        
     }
     else if ( SentRegData == status )
     {
@@ -249,6 +254,15 @@ uint16_t ft80x_spi_read_16bits( const uint32_t addr )
 }
 
 
+
+
+bool ft80x_it_api_isSending( void )
+{
+    if ( ReadyToSend == _thisData.m_sendingStatus )
+        return false ;
+    else
+        return true ;
+}
 
 
 

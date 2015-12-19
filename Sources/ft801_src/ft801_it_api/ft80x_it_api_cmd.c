@@ -23,11 +23,13 @@ uint16_t ft80x_spi_read_16bits( const uint32_t addr );
 
 // ##### DECLARATION OF LOCAL STATIC FUNCTIONS #####
 static void _cmd_append_str( const char * str ) ;
+static void _cmd_append_buff( const uint8_t * const buff, const uint32_t size );
+
 
 
 
 // ##### DECLARE LOCAL (STATIC) GLOBALS #####
-static size_t reg_cmd_write_val ;
+static size_t reg_cmd_write_val ;    // holds value read from REG_CMD_WRITE before appending commands
 static size_t bytes_in_transaction ; // how many cmd bytes was appended to the buffer
 
 
@@ -75,9 +77,8 @@ bool ft801_api_cmd_append_it( const uint32_t data )
 
 
 void ft801_api_cmd_flush_it(void)
-{   
+{       
     // Calculate index for chip's cmds fifo:
-       
     size_t fullness = bytes_in_transaction ;
     // Prepare value for REG_CMD_WRITE
     fullness += reg_cmd_write_val ;
@@ -304,6 +305,49 @@ void ft801_api_cmd_track_it(
 
 
 
+void ft801_api_cmd_memwrite_it(
+    const uint32_t addr,
+    const uint8_t * const ptr,
+    const uint32_t num
+)
+{
+    // append to the buffer the the command
+    ft801_api_cmd_append_it( CMD_MEMWRITE );
+    
+    // append the address in the memory ( register can be used too )
+    ft801_api_cmd_append_it( addr ) ;
+    
+    // append the number of BYTES
+    ft801_api_cmd_append_it( num ) ;
+    
+    // append the bytes -> with 4B aligment!
+    _cmd_append_buff( ptr, num ) ;
+}
+
+
+// write 16 bit
+void ft801_api_cmd_memwrite_16_it(
+    const uint32_t addr,
+    const uint16_t value
+)
+{
+    // append to the buffer the the command
+    ft801_api_cmd_append_it( CMD_MEMWRITE );
+    
+    // append the address in the memory ( register can be used too )
+    ft801_api_cmd_append_it( addr ) ;
+    
+    // append the number of BYTES
+    ft801_api_cmd_append_it( 2 ) ;
+    
+    // append the number of BYTES
+    ft801_api_cmd_append_it( (uint32_t)value ) ;
+}
+
+
+
+
+
 
 
 
@@ -328,20 +372,35 @@ static void _cmd_append_str( const char * str )
     
     
     // put string into buffer
-    ft80x_it_ring_buffer_appendBuff( str, str_len );
+    ft80x_it_ring_buffer_appendBuff( (const uint8_t *)str, str_len );
     
-//    for( uint8_t* c = (uint8_t*)str; *c ; ++c )
-//    {
-//       ft80x_it_ring_buffer_append( *c ) ;
-//    }
-    // append the NULL character
-   // ft801_api_cmd_append_it ('\0') ;
     
-    // append the padding bytes
-    for ( size_t i = 0 ; i < str_padd; ++i )
-    {
-        ft80x_it_ring_buffer_append(0) ;
-    }        
+    // append the padding bytes       
+    if ( str_padd > 0 )
+        ft80x_it_ring_buffer_copyto(0, str_padd);
     
-        bytes_in_transaction += str_len + str_padd ;
+    
+    bytes_in_transaction += str_len + str_padd ;
+}
+
+
+
+static void _cmd_append_buff( const uint8_t * const buff, const uint32_t size )
+{
+    // calculate the padding bytes
+    size_t padd_no = size % 4; // this value is just temporary
+    
+    // calculate valid padding bytes
+    padd_no = ( 0 < padd_no ) ? ( 4 - padd_no ) : 0 ;
+    
+    // put buffer into ring buffer
+    ft80x_it_ring_buffer_appendBuff( buff, size );
+    
+    // put the padding bytes
+    if ( padd_no > 0 )
+        ft80x_it_ring_buffer_copyto(0, padd_no);
+    
+    
+    // update internal counter
+    bytes_in_transaction += size + padd_no ;
 }

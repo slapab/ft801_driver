@@ -21,7 +21,7 @@ static volatile struct ft80x_it_ring_buffer ringBuffer;
 
 
 // api to handle the ring buffer
-bool ft80x_it_ring_buffer_appendBuff( const char * const data, const size_t len )
+bool ft80x_it_ring_buffer_appendBuff( const uint8_t * const data, const size_t len )
 {
     
     if ( !ft80x_it_ring_buffer_isfull() )
@@ -51,6 +51,38 @@ bool ft80x_it_ring_buffer_appendBuff( const char * const data, const size_t len 
     }
     
 }
+
+
+// copy len-times value 'val' into ring buffer
+bool ft80x_it_ring_buffer_copyto( const uint8_t val, const size_t len )
+{
+    if ( !ft80x_it_ring_buffer_isfull() )
+    {
+        size_t free_space = ft80x_it_ring_buffer_freespace() ;
+        if ( free_space < len )
+        {
+            return false ;
+        }
+        
+        // instead of modulo operation -> but the size must be power of 2
+        sig_atomic_t head_idx = ringBuffer.head & (FT801_RINGBUFFER_SIZE-1); 
+        
+        for ( size_t i = 0 ; i < len ; ++i )
+        {
+            ringBuffer.buf[ head_idx ] = val ;
+            head_idx = (head_idx +1) & (FT801_RINGBUFFER_SIZE-1);
+        }
+       
+        // update index
+        ringBuffer.head += len;
+        return true ;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 
 
 bool ft80x_it_ring_buffer_append( const uint8_t data )

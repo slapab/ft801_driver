@@ -86,4 +86,18 @@ void ft801_api_cmd_track_it(
     int16_t tag
 );
 
+
+
+void ft801_api_cmd_memwrite_it(
+    uint32_t addr,
+    const uint8_t * const ptr,
+    uint32_t num
+);
+    
+    
+void ft801_api_cmd_memwrite_16_it(
+    const uint32_t addr,
+    const uint16_t value
+);
+
 #endif

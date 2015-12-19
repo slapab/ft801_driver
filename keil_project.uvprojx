@@ -373,7 +373,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>.\Sources\inc;.\Sources\ft801_src;.\Sources\ft801_src\ft801_it_api</IncludePath>
+              <IncludePath>.\Sources\inc;.\Sources\ft801_src;.\Sources\ft801_src\ft801_it_api;.\Sources\ft801_src\ft801_engine_it</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -435,6 +435,11 @@
               <FileName>gpio_exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Sources\src\gpio_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>my_tasks.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\src\my_tasks.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -535,6 +540,31 @@
               <FileName>ft80x_it_api_cmd.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\ft801_src\ft801_it_api\ft80x_it_api_cmd.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ft80x_engine_it</GroupName>
+          <Files>
+            <File>
+              <FileName>ft80x_engine_it.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_engine_it\ft80x_engine_it.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft80x_engine_it.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_engine_it\ft80x_engine_it.h</FilePath>
+            </File>
+            <File>
+              <FileName>ft80x_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_engine_it\ft80x_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>ft80x_task.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\ft801_src\ft801_engine_it\ft80x_task.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -13,6 +13,9 @@
 
 
 #include "ft80x_it_api.h"
+#include "ft80x_engine_it.h"
+
+#include "my_tasks.h"
 
 //#include "ringBuffer_api.h"
 
@@ -23,7 +26,9 @@
 //#define _EXAMPLE_TAG_TRACK
 //#define _CALIBRATE_TOUCH
 
-#define _TEST_IT_API
+//#define _TEST_IT_API
+
+#define _TEST_GPU_ENGINE
 
 
 // Declare the descryptor for ring buffer
@@ -93,6 +98,8 @@ void EXTI4_IRQHandler(void)
         EXTI->PR |= EXTI_PR_PR4;
         
         gpu_int = 1;
+        
+        ft80x_gpu_eng_it_rountine();
     }
     
    
@@ -466,6 +473,7 @@ int main(void)
         // the second screen
         sleep(23) ;
         sleep(23) ;
+        sleep(23) ;
         
         ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
         
@@ -481,9 +489,61 @@ int main(void)
         ft801_api_cmd_flush_it();
         
         while ( false == ft80x_it_check() );
+
+        // try to change the brightness
+//        sleep(23) ;
+//        sleep(23) ;
+//        ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
+//        
+//        //ft801_api_cmd_append_it(CMD_DLSTART) ;
+//        uint8_t tab[1] = { 1 } ;
+//        ft801_api_cmd_memwrite_it(REG_PWM_DUTY, tab , 1) ;
+//        
+//        //ft801_api_cmd_append_it(DISPLAY()) ;
+//        //ft801_api_cmd_append_it(CMD_SWAP);
+
+//        ft801_api_cmd_flush_it();
+//        
+//        while ( false == ft80x_it_check() );
+
         
 #endif        
-    
+
+
+#ifdef _TEST_GPU_ENGINE
+
+        // init it_api
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
+        // init the gpu_engine api
+        ft80x_gpu_eng_it_init() ;
+        
+        
+        // create new task
+        uint32_t tab[1] ;
+        FT80xTask_TypeDef g_task1 ;
+        g_task1.mfp_doing = task1_doing ;
+        g_task1.mfp_painting = task1_painting;
+        g_task1.mfp_gpu_it = task1_gpuit ;
+        g_task1.mp_shared_data = tab ;
+        g_task1.m_id = TASK_ID1 ;
+        
+        // register the task
+        ft80x_gpu_eng_it_reg_task(&g_task1) ;
+        
+        // set active task
+        ft80x_gpu_eng_it_setActiveTask(TASK_ID1) ;
+        
+        while(1)
+        {
+            ft80x_it_check() ; // pooling the it_api
+            ft80x_gpu_eng_it_looper() ; // pooling the gpu_engine
+
+        }
+
+
+#endif
+
+
     }        
 
 
