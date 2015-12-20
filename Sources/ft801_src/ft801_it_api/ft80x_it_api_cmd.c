@@ -297,7 +297,7 @@ void ft801_api_cmd_track_it(
     ft801_api_cmd_append_it(tmp) ;
     
     // wrap the tag
-    tmp = (0U << 16) | (uint32_t)tag ;
+    tmp = 0U | (uint32_t)tag ;
     ft801_api_cmd_append_it(tmp) ;
 }
 
@@ -344,6 +344,37 @@ void ft801_api_cmd_memwrite_16_it(
     ft801_api_cmd_append_it( (uint32_t)value ) ;
 }
 
+
+void ft801_api_cmd_slider_it(
+    int16_t x,
+    int16_t y,
+    int16_t w,
+    int16_t h,
+    uint16_t options,
+    uint16_t val,
+    uint16_t range
+)
+{
+   // append to the buffer the the command
+    ft801_api_cmd_append_it( CMD_SLIDER );
+    
+    uint32_t tmp ;
+    // wrap x, y position
+    tmp = ((uint32_t)y << 16) | (uint32_t)x ;
+    ft801_api_cmd_append_it(tmp) ;
+    
+    // wrap w, h parameters
+    tmp = ((uint32_t)h << 16) | (uint32_t)w ;
+    ft801_api_cmd_append_it( tmp ) ;
+    
+    // wrap options and val parameters
+    tmp = ((uint32_t)val << 16) | (uint32_t)options ;
+    ft801_api_cmd_append_it( tmp ) ;
+    
+    // wrap range parameter
+    tmp = 0u | (uint32_t)range ;
+    ft801_api_cmd_append_it( tmp ) ;
+}
 
 
 

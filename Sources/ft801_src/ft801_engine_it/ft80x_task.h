@@ -4,8 +4,9 @@
 #include <stdbool.h>
 
 
+
 // function pointers
-typedef bool (*painting_task_t)(void);
+typedef bool (*painting_task_t)(void * const data);
 typedef bool (*doing_task_t)( void * const data );
 typedef bool (*gpu_it_task_t)( const uint8_t it_flags, void * const data );
 

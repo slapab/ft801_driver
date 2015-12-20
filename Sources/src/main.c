@@ -196,7 +196,7 @@ int main(void)
         }
         
         // enable external interrupts
-        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG | FT_INT_TOUCH);
+        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG | FT_INT_CONVCOMPLETE | FT_INT_TOUCH);
         ft801_api_enable_it_pin(true);
         // clear any pending flags
         ft801_api_read_it_flags() ;
@@ -517,11 +517,12 @@ int main(void)
         g_task1.m_id = TASK_ID1 ;
         
         // new task two
+        uint16_t tab2[3] = {0,0,0} ;
         FT80xTask_TypeDef g_task2 ;
         g_task2.mfp_doing = task2_doing ;
         g_task2.mfp_painting = task2_painting;
         g_task2.mfp_gpu_it = task2_gpuit ;
-        g_task2.mp_shared_data = tab ;
+        g_task2.mp_shared_data = tab2 ;
         g_task2.m_id = TASK_ID2 ;
         
         

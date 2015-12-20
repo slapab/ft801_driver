@@ -99,5 +99,16 @@ void ft801_api_cmd_memwrite_16_it(
     const uint32_t addr,
     const uint16_t value
 );
+    
+    
+void ft801_api_cmd_slider_it(
+    int16_t x,
+    int16_t y,
+    int16_t w,
+    int16_t h,
+    uint16_t options,
+    uint16_t val,
+    uint16_t range
+) ;
 
 #endif

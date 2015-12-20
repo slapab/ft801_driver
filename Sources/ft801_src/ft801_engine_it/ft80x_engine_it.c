@@ -144,6 +144,8 @@ void ft80x_gpu_eng_it_looper(void)
         {
             curr_task->mfp_gpu_it(_thisData.m_gpu_itflags, curr_task->mp_shared_data);
         }
+        
+        // clear IT
     }
     
     
@@ -156,7 +158,7 @@ void ft80x_gpu_eng_it_looper(void)
             // clear flag CMDREADY -> commands will be sending right now
             _thisData.m_gpuIT_flag &= ~GPU_IT_FLAGS_CMDREADY ;
             // call task's painting function
-            _thisData.m_currTask->mfp_painting() ;
+            _thisData.m_currTask->mfp_painting(curr_task->mp_shared_data) ;
             break;
         case Painting :
             if ( _thisData.m_gpuIT_flag & GPU_IT_FLAGS_CMDREADY )
