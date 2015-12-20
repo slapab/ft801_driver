@@ -196,7 +196,7 @@ int main(void)
         }
         
         // enable external interrupts
-        ft801_api_enable_it_src(FT_INT_CMDEMPTY /*| FT_INT_TAG*/);
+        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG | FT_INT_TOUCH);
         ft801_api_enable_it_pin(true);
         // clear any pending flags
         ft801_api_read_it_flags() ;
@@ -508,7 +508,7 @@ int main(void)
         
         
         // create new task
-        uint32_t tab[1] ;
+        uint8_t tab[1] = { 0 } ;
         FT80xTask_TypeDef g_task1 ;
         g_task1.mfp_doing = task1_doing ;
         g_task1.mfp_painting = task1_painting;
@@ -516,8 +516,18 @@ int main(void)
         g_task1.mp_shared_data = tab ;
         g_task1.m_id = TASK_ID1 ;
         
-        // register the task
+        // new task two
+        FT80xTask_TypeDef g_task2 ;
+        g_task2.mfp_doing = task2_doing ;
+        g_task2.mfp_painting = task2_painting;
+        g_task2.mfp_gpu_it = task2_gpuit ;
+        g_task2.mp_shared_data = tab ;
+        g_task2.m_id = TASK_ID2 ;
+        
+        
+        // register tasks
         ft80x_gpu_eng_it_reg_task(&g_task1) ;
+        ft80x_gpu_eng_it_reg_task(&g_task2) ;
         
         // set active task
         ft80x_gpu_eng_it_setActiveTask(TASK_ID1) ;
