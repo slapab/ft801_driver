@@ -2,6 +2,7 @@
 #define _FT80X_ENGINE_IT_H_
 
 #include "ft80x_task.h"
+#include "ft801_gpu.h"
 
 void ft80x_gpu_eng_it_rountine(void);
 void ft80x_gpu_eng_it_looper(void) ;
@@ -14,3 +15,4 @@ void ft80x_gpu_eng_it_setActiveTask( const uint16_t task_id ) ;
 
 
 #endif
+

@@ -50,8 +50,9 @@ typedef struct
 #define GPU_IT_FLAGS_READ (1 << 1)
 /// FLAGS form GPU are being read righ now. 0 if is not reading in current moment
 #define GPU_IT_FLAGS_READING (1 << 2)
-
-
+/// If 1 that means that received IT with information that processing CMD was just 
+/// completed and can send new commands
+#define GPU_IT_FLAGS_CMDREADY ( 1 << 3 )
 
 // 
 static ft80x_engine_it_TypeDef _thisData ;
@@ -61,6 +62,8 @@ static ft80x_engine_it_TypeDef _thisData ;
 // ######### FORWARD DECLARATION OF SHARED IT API ##########
 // Defined in ft80x_it_api.c
 bool ft80x_it_api_isSending( void ) ;
+uint16_t ft80x_spi_read_16bits( const uint32_t addr ) ;
+
 
 
 // ######### FORWARD DECLARATION OF LOCAL FUNCTIONS ##########
@@ -88,26 +91,58 @@ void ft80x_gpu_eng_it_looper(void)
 {
     FT80xTask_TypeDef * curr_task = _thisData.m_currTask ;
     
+    
     // do nothing if no task is active
     if ( NULL == curr_task )
         return ;
     
     
+    
     // read if communication is in progress ->from it_api 
     bool comm_in_progress = ft80x_it_api_isSending();
     
-    // check for interrupts
+    // check for interrupts, but only when is no ongoing transmission
     if ( false == comm_in_progress )
     {
         if ( _thisData.m_gpuIT_flag & GPU_IT_NEED_READ )
         {
+            // disable flag that need to read IT FLAGS from GPU
             _thisData.m_gpuIT_flag &= ~GPU_IT_NEED_READ ;
-            _thisData.m_gpuIT_flag |= GPU_IT_FLAGS_READING ;
-            ///
-            // todo -> read data from GPU register
-            ///
-            _thisData.m_gpuIT_flag &= ~GPU_IT_FLAGS_READING ;
+            // READING IT FLAGS is on progress
+            //_thisData.m_gpuIT_flag |= GPU_IT_FLAGS_READING ;
+            
+            // read flags from the GPU and store in local variable
+            uint16_t tmp = ft80x_spi_read_16bits(REG_INT_FLAGS) ;
+            _thisData.m_gpu_itflags = (uint8_t)tmp ; // MSB because it is Little-endian
+            
+            
+            // READING IT was completed
+            //_thisData.m_gpuIT_flag &= ~GPU_IT_FLAGS_READING ;
+            // IT Flags from GPU has been read
             _thisData.m_gpuIT_flag |= GPU_IT_FLAGS_READ ;
+        }
+    }
+    
+    
+    // HANDLE HERE IT FLAGS
+    // If flags was read from GPU then send it to the user function
+    if ( _thisData.m_gpuIT_flag & GPU_IT_FLAGS_READ )
+    {
+        // Clear information -> fire this code only once for each interrupt
+        _thisData.m_gpuIT_flag &= ~GPU_IT_FLAGS_READ ;
+        
+        
+        // check if CMD empty interrupt was set
+        if ( _thisData.m_gpu_itflags & FT_INT_CMDEMPTY )
+        {
+            _thisData.m_gpuIT_flag |= GPU_IT_FLAGS_CMDREADY ;
+        }
+        
+ 
+        // Call user function to handle interrupts
+        if ( NULL != curr_task->mfp_gpu_it )
+        {
+            curr_task->mfp_gpu_it(_thisData.m_gpu_itflags, curr_task->mp_shared_data);
         }
     }
     
@@ -118,14 +153,16 @@ void ft80x_gpu_eng_it_looper(void)
         case New :
             // set state to Painting
             _thisData.m_currTaskState = Painting ;
+            // clear flag CMDREADY -> commands will be sending right now
+            _thisData.m_gpuIT_flag &= ~GPU_IT_FLAGS_CMDREADY ;
             // call task's painting function
             _thisData.m_currTask->mfp_painting() ;
             break;
         case Painting :
-            // todo -> wait for CMD processed IT -> based on IT from GPU
-            if ( false == comm_in_progress )
+            if ( _thisData.m_gpuIT_flag & GPU_IT_FLAGS_CMDREADY )
             {
-                // switch to Running if communication was finished
+                // switch to Running if communication was finished and if 
+                // GPU finished processing the commands -> it just printed the screen
                 _thisData.m_currTaskState = Running ;
             }
             break;

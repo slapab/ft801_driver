@@ -7,7 +7,7 @@
 // function pointers
 typedef bool (*painting_task_t)(void);
 typedef bool (*doing_task_t)( void * const data );
-typedef bool (*gpu_it_task_t)(void * const data );
+typedef bool (*gpu_it_task_t)( const uint8_t it_flags, void * const data );
 
 #define FT80X_TASK_FUNC_DOING   (1<<0) ;
 #define FT80X_TASK_FUNC_GPU_IT  (1<<1) ;
@@ -39,3 +39,4 @@ struct FT80xTask_TypeDef
 
 
 #endif
+

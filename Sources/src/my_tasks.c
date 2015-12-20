@@ -31,7 +31,7 @@ bool task1_doing( void * const data )
 }
 
 
-bool task1_gpuit( void * const data )
+bool task1_gpuit( const uint8_t itflags, void * const data )
 {
     return true;
 }
