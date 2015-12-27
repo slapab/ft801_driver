@@ -211,6 +211,9 @@ bool task2_gpuit( const uint8_t itflags, void * const data )
 
 // keyboard task
 static uint16_t keys_pressed = 0;
+static uint16_t shift_bt_pressed = 0;
+static uint16_t backsapce_bt_pressed = 0 ;
+static uint16_t space_bt_pressed = 0 ;
 bool keyboardTask_painting( void * const data )
 {
  
@@ -223,14 +226,7 @@ bool keyboardTask_painting( void * const data )
     ft801_api_cmd_append_it(CLEAR_COLOR_RGB(0, 120, 255));
     ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
     ft801_api_cmd_append_it(COLOR_RGB(255,255,255));
-//    ft801_api_cmd_append_it( TAG(3) );
-//    ft801_api_cmd_text_it(240,50,30,FT_OPT_CENTER,"Back to HOME") ;
-    
-//    ft801_api_cmd_append_it(TAG(4) );
-//    ft801_api_cmd_slider_it(120,100, 240,10, FT_OPT_FLAT, myData[2], 65535) ;
-//    ft801_api_cmd_track_it(120, 90, 240, 20, 4);
-//    ft801_api_cmd_append_it(TAG(100) );
-    //ft801_api_cmd_append_it(TAG_MASK(0)) ;
+
     
     // draw the rectangle for text inuput
     ft801_api_cmd_append_it( LINE_WIDTH(2*16) );
@@ -241,23 +237,58 @@ bool keyboardTask_painting( void * const data )
     
     // draw the keyboard
     
-    // the alpha keys
-    ft801_api_cmd_keys_it( 10, 100, 10*32,32, 26, keys_pressed, "qwertyuiop");
-    ft801_api_cmd_keys_it( 10, 135, 9*32,32, 26, keys_pressed, "asdfghjkl");
-    ft801_api_cmd_keys_it( 10, 170, 7*32,32, 26, keys_pressed, "zxcvbnm");
-    ft801_api_cmd_button_it( 10 + (7*32) + 5, 170, 90, 32, 26, keys_pressed, "Backspace" );
-    ft801_api_cmd_button_it( 10, 205, 60, 32, 26, keys_pressed, "Shift" );
-    ft801_api_cmd_keys_it( 75, 205, 3*32,32, 26, keys_pressed, ", .");
+    // set color for keys
+    ft801_api_cmd_fgcolor_it(COLOR_RGB(0, 100, 180)) ;
+    
+    // the keys
+    ft801_api_cmd_keys_it( 10, 100, 10*32,32, 26, keys_pressed,
+        (shift_bt_pressed != FT_OPT_FLAT)? "qwertyuiop" : "QWERTYUIOP"
+    );
+    ft801_api_cmd_keys_it( 10, 135, 9*32,32, 26, keys_pressed,
+        (shift_bt_pressed != FT_OPT_FLAT)? "asdfghjkl" : "ASDFGHJKL"
+    );
+    ft801_api_cmd_keys_it( 10, 170, 7*32,32, 26, keys_pressed,
+        (shift_bt_pressed != FT_OPT_FLAT)? "zxcvbnm" : "ZXCVBNM"
+    );
+    ft801_api_cmd_append_it( TAG(200) );
+    ft801_api_cmd_button_it( 10 + (7*32) + 5, 170, 90, 32, 26, backsapce_bt_pressed, "Backspace" );
+    ft801_api_cmd_append_it( TAG(201) );
+    ft801_api_cmd_button_it( 10, 205, 61, 32, 26, shift_bt_pressed, "Shift" );
+    ft801_api_cmd_keys_it( 10+64, 205, 2*32,32, 26, keys_pressed, ",.");
+    ft801_api_cmd_append_it( TAG(202) );
+    ft801_api_cmd_button_it( 10 + 131, 205, 60, 32, 26, space_bt_pressed, "" );
+    ft801_api_cmd_append_it( TAG_MASK(0) );
+    
+    
+    
     // the numeric keys
-    ft801_api_cmd_keys_it( (10*32) + 40, 100, 3*32,32, 26, keys_pressed, "789");
-    ft801_api_cmd_keys_it( (10*32) + 40, 135, 3*32,32, 26, keys_pressed, "456");
-    ft801_api_cmd_keys_it( (10*32) + 40, 170, 3*32,32, 26, keys_pressed, "123");
-    ft801_api_cmd_keys_it( (10*32) + 40, 205, 3*32,32, 26, keys_pressed, "+0-");
+    ft801_api_cmd_keys_it( (10*32) + 40, 100, 3*32,32, 26, keys_pressed,
+        (shift_bt_pressed != FT_OPT_FLAT) ? "789" : "!@#"
+    );
+    ft801_api_cmd_keys_it( (10*32) + 40, 135, 3*32,32, 26, keys_pressed,
+        (shift_bt_pressed != FT_OPT_FLAT) ? "456" : "$%^"
+    );
+    ft801_api_cmd_keys_it( (10*32) + 40, 170, 3*32,32, 26, keys_pressed,
+        (shift_bt_pressed != FT_OPT_FLAT) ? "123" : "&*("
+    );
+    ft801_api_cmd_keys_it( (10*32) + 40, 205, 3*32,32, 26, keys_pressed,
+        (shift_bt_pressed != FT_OPT_FLAT) ? "+0-" : ")_;"
+    );
     
     
+    // save currrent context
+    ft801_api_cmd_append_it( SAVE_CONTEXT()) ;
     
-    //ft801_api_cmd_text_it(120, 130, 28, 0, str_task2 ) ;
+    // the OK and cancel button
+    ft801_api_cmd_fgcolor_it(COLOR_RGB(250, 0, 0)) ;
+    ft801_api_cmd_button_it( 220 , 272-34, 70, 28, 26, FT_OPT_FLAT, "CANCEL" ) ;
     
+    ft801_api_cmd_fgcolor_it(COLOR_RGB(0, 180, 0)) ;
+    ft801_api_cmd_button_it( 300 , 272-34, 40, 28, 26, FT_OPT_FLAT, "OK" ) ;
+    
+    
+    // restore context
+    ft801_api_cmd_append_it( RESTORE_CONTEXT()) ;
     
     
     //ft801_api_cmd_append_it(TAG(5) );
@@ -286,19 +317,36 @@ bool keyboardTask_doing( void * const data )
         
         uint8_t tag = ft801_spi_rd8(REG_TOUCH_TAG);
         
+        keys_pressed = 0 ;
+        backsapce_bt_pressed = 0 ;  //3D
+        space_bt_pressed = 0 ;      //3D
+        
+        
         // handle the keys touch
-        if ( (tag > 0x20) && ( tag < 0x7E) )
+        if ( ((tag > 0x20) && ( tag < 0x7E)))
         {
             keys_pressed = tag ;
-            // update changes on the screen
-            ft80x_gpu_eng_it_setActiveTask(TASK_KEYBOARD) ;
         }
-        else
+        // handle the backspace button pressed
+        else if ( 200 == tag )
         {
-            keys_pressed = 0 ;
-            // update changes on the screen
-            ft80x_gpu_eng_it_setActiveTask(TASK_KEYBOARD) ;
+            backsapce_bt_pressed = FT_OPT_FLAT ; // flat
         }
+        // handle the shift button
+        else if ( 201 == tag )
+        {
+            if ( shift_bt_pressed != 0 )
+                shift_bt_pressed = 0 ;
+            else
+                shift_bt_pressed = FT_OPT_FLAT ;
+        }
+        else if ( 202 == tag )
+        {
+            space_bt_pressed = FT_OPT_FLAT ;
+        }
+        
+        // update changes on the screen
+        ft80x_gpu_eng_it_setActiveTask(TASK_KEYBOARD) ;
     }
     
     
