@@ -517,7 +517,7 @@ int main(void)
         g_task1.m_id = TASK_ID1 ;
         
         // new task two
-        uint16_t tab2[3] = {0,0,0} ;
+        uint16_t tab2[5] = {0,0,0,0,64} ;
         FT80xTask_TypeDef g_task2 ;
         g_task2.mfp_doing = task2_doing ;
         g_task2.mfp_painting = task2_painting;

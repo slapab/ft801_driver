@@ -378,6 +378,39 @@ void ft801_api_cmd_slider_it(
 
 
 
+void ft801_api_cmd_gauge_it(
+    int16_t x,
+    int16_t y,
+    int16_t r,
+    uint16_t options,
+    uint16_t major,
+    uint16_t minor,
+    uint16_t val,
+    uint16_t range
+)
+{
+    // append to the buffer the the command
+    ft801_api_cmd_append_it( CMD_GAUGE );
+    
+    uint32_t tmp ;
+    // wrap x, y position
+    tmp = ((uint32_t)y << 16) | (uint32_t)x ;
+    ft801_api_cmd_append_it(tmp) ;
+    
+    // wrap w, h parameters
+    tmp = ((uint32_t)options << 16) | (uint32_t)r ;
+    ft801_api_cmd_append_it( tmp ) ;
+    
+    // wrap options and val parameters
+    tmp = ((uint32_t)minor << 16) | (uint32_t)major ;
+    ft801_api_cmd_append_it( tmp ) ;
+    
+    // wrap range parameter
+   tmp = ((uint32_t)range << 16) | (uint32_t)val ;
+    ft801_api_cmd_append_it( tmp ) ;
+}
+
+
 
 
 

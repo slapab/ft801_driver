@@ -111,4 +111,17 @@ void ft801_api_cmd_slider_it(
     uint16_t range
 ) ;
 
+
+
+void ft801_api_cmd_gauge_it(
+    int16_t x,
+    int16_t y,
+    int16_t r,
+    uint16_t options,
+    uint16_t major,
+    uint16_t minor,
+    uint16_t val,
+    uint16_t range
+) ;
+
 #endif
