@@ -526,9 +526,21 @@ int main(void)
         g_task2.m_id = TASK_ID2 ;
         
         
+        // keyboard task
+        uint16_t tab3[3] = {0,0,0} ;
+        FT80xTask_TypeDef g_task3 ;
+        g_task3.mfp_doing = keyboardTask_doing ;
+        g_task3.mfp_painting = keyboardTask_painting;
+        g_task3.mfp_gpu_it = keyboardTask_gpuit ;
+        g_task3.mp_shared_data = tab3 ;
+        g_task3.m_id = TASK_KEYBOARD ;
+        
+        
         // register tasks
         ft80x_gpu_eng_it_reg_task(&g_task1) ;
         ft80x_gpu_eng_it_reg_task(&g_task2) ;
+        ft80x_gpu_eng_it_reg_task(&g_task3) ;
+        
         
         // set active task
         ft80x_gpu_eng_it_setActiveTask(TASK_ID1) ;

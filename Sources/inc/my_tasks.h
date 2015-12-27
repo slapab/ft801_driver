@@ -17,4 +17,10 @@ bool task2_gpuit( const uint8_t itflags, void * const data );
 
 
 
+#define TASK_KEYBOARD 3 
+bool keyboardTask_painting( void * const );
+bool keyboardTask_doing( void * const );
+bool keyboardTask_gpuit( const uint8_t, void * const ) ;
+
+
 #endif

@@ -227,7 +227,10 @@ void ft80x_gpu_eng_it_setActiveTask( const uint16_t task_id )
 {
     // reset internal state
     _thisData.m_currTaskState = New ;
-    _thisData.m_gpuIT_flag = 0 ;
+    
+    // reset flags but keep the IT flag -> the it flags from GPU must be read
+    _thisData.m_gpuIT_flag = 0 | (_thisData.m_gpuIT_flag & GPU_IT_NEED_READ ) ;
+    
     _thisData.m_gpu_itflags = 0 ;
 
     // set active state
