@@ -22,9 +22,11 @@ bool task1_painting(void * const data)
     ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
     ft801_api_cmd_append_it(COLOR_RGB(0,100,250));
     ft801_api_cmd_append_it( TAG(2) );
-    ft801_api_cmd_text_it(240,136,30,FT_OPT_CENTER,"Sliders task") ;
+    ft801_api_cmd_text_it(240,126,30,FT_OPT_CENTER,"Sliders task") ;
     ft801_api_cmd_append_it( TAG(3) );
     ft801_api_cmd_text_it(240,166,30,FT_OPT_CENTER,"Keyboard task") ;
+    ft801_api_cmd_append_it( TAG(4) );
+    ft801_api_cmd_text_it(240,206,30,FT_OPT_CENTER,"Graph task") ;
     ft801_api_cmd_append_it(TAG_MASK(0)) ;
 
     ft801_api_cmd_append_it(DISPLAY()) ;
@@ -55,6 +57,10 @@ bool task1_doing( void * const data )
         {
              // set the active task to keyboard task
             ft80x_gpu_eng_it_setActiveTask(TASK_KEYBOARD) ;
+        }
+        else if ( 4 == tag )
+        {
+            ft80x_gpu_eng_it_setActiveTask(TASK_GRAPH) ;
         }
     }
     
@@ -462,4 +468,208 @@ bool keyboardTask_gpuit( const uint8_t itflags, void * const data )
 }
 
 
+
+
+
+
+
+
+// THE GRAPH TASK
+#define CONV_DIST(x) ((x)*16)
+static const uint8_t point_num = 35 ;
+static uint16_t x[point_num] = {0, 9, 18, 27, 36, 44, 54, 63, 72, 81, 89, 99, 108, 117, 126, 135, 144, 153, 162, 171, 179, 189, 198, 206, 216, 225, 234, 242, 252, 261, 270, 279, 288, 297, 306};    
+static uint16_t y[point_num] = {0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1};
+    
+static uint16_t x_scale = 0 ;
+static uint16_t y_scale = 0 ;
+static int16_t tx1 = 0 ;
+static int16_t ty1 = 0 ;
+static int16_t tx2 = 0 ;
+static int16_t ty2 = 0 ;
+
+bool graphExample_painting( void * const data )
+{
+    uint16_t * myData = data ;
+    
+    ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
+    
+    
+    ft801_api_cmd_append_it(CMD_DLSTART) ;
+    ft801_api_cmd_append_it(CLEAR_COLOR_RGB(0, 120, 255));
+    ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
+    ft801_api_cmd_append_it(COLOR_RGB(255,255,255));
+    ft801_api_cmd_append_it( TAG(200) ) ;
+    ft801_api_cmd_text_it(10,10, 26, 0, "Back to the home" ) ;
+    
+    
+    
+    // print the frame for the graph
+    
+    uint16_t x_dist = 10 * 16 ; // distance from the left edge
+    uint16_t x_width = 460 * 16 ; // width (x) of the rectangle
+    uint16_t y_dist = 50 * 16 ; // distance from the top
+    uint16_t y_width = 212 * 16 ; // width (y) of the rectangle
+    
+    ft801_api_cmd_append_it( TAG(201) ) ;
+    ft801_api_cmd_append_it( SAVE_CONTEXT() ) ;
+    ft801_api_cmd_append_it( COLOR_RGB(0, 0, 0) );
+    
+    ft801_api_cmd_append_it( BEGIN(FT_RECTS) ) ;
+    ft801_api_cmd_append_it( LINE_WIDTH(2*16)) ;
+    ft801_api_cmd_append_it( VERTEX2F( x_dist, y_dist ) );
+    ft801_api_cmd_append_it( VERTEX2F( x_dist + x_width, y_dist+y_width ) );
+    ft801_api_cmd_append_it( END() );
+    
+    // track touching this rect
+    ft801_api_cmd_track_it(x_dist, y_dist, x_width, y_width, 201 ) ;
+    
+    ft801_api_cmd_append_it( TAG_MASK(0) ) ;
+    
+    
+    // draw the plot
+    ft801_api_cmd_append_it( COLOR_RGB(200, 200, 200) );
+    ft801_api_cmd_append_it( BEGIN(FT_LINES) ) ;
+    ft801_api_cmd_append_it( LINE_WIDTH(1*16)) ;
+    
+    
+    uint16_t y_middle = (y_width / 2) + y_dist ;
+    for ( uint8_t i = 0 ; i < point_num-1 ; ++i )
+    {
+        
+        // start 
+       
+        if ( y[i] == 1 )
+            ft801_api_cmd_append_it( VERTEX2F( x_dist + CONV_DIST(x[i]) , y_middle - CONV_DIST(y[i]+50) - y_scale) );
+        else
+            ft801_api_cmd_append_it( VERTEX2F( x_dist + CONV_DIST(x[i]), y_middle + CONV_DIST(y[i]+50) + y_scale  ) );
+        
+        // end
+        
+        if ( y[i+1] == 1 )
+            ft801_api_cmd_append_it( VERTEX2F( x_dist + CONV_DIST(x[i+1]), y_middle - CONV_DIST(y[i+1]+50) - y_scale ) );
+        else
+            ft801_api_cmd_append_it( VERTEX2F( x_dist + CONV_DIST(x[i+1]), y_middle + CONV_DIST(y[i+1]+50) + y_scale ) );
+        
+    }
+    ft801_api_cmd_append_it( END() );
+    
+    
+    
+    // Draw the touch points
+    if ( (tx1 != 0) && ( tx2 != 0) )
+    {
+        // draw sample points
+        ft801_api_cmd_append_it( COLOR_RGB(250, 250, 250) );
+        ft801_api_cmd_append_it( COLOR_A(100) );
+        ft801_api_cmd_append_it( BEGIN(FT_POINTS) ) ;
+        ft801_api_cmd_append_it( POINT_SIZE(30*16) ) ;
+        ft801_api_cmd_append_it( VERTEX2F( tx1, ty1) );
+        ft801_api_cmd_append_it( VERTEX2F( tx2 , ty2) );
+        ft801_api_cmd_append_it( END() );
+    }
+    
+    
+    
+    ft801_api_cmd_append_it( RESTORE_CONTEXT() ) ;
+    
+    
+    ft801_api_cmd_append_it(DISPLAY()) ;
+    ft801_api_cmd_append_it(CMD_SWAP);
+    
+    
+    
+    ft801_api_cmd_flush_it();
+    
+    return true ;
+}
+
+
+bool graphExample_doing( void * const data )
+{
+    
+    uint16_t * myData ;
+    if ( 1 == myData[0] )
+    {
+        myData[0] = 0 ;
+        
+        // read the tag
+        //uint8_t tag = ft801_spi_rd8(REG_TOUCH_TAG);
+        uint32_t tmp = ft801_spi_rd32(REG_TRACKER);
+        uint8_t tag = tmp & 0xFF ;
+        
+        // back to menu
+        if ( 200 == tag )
+        {
+            ft80x_gpu_eng_it_setActiveTask(TASK_ID1) ;
+            return true ;
+        }
+        // detected touch on the graph field
+        else if ( 201 == tag )
+        {
+            // read the xy of first touch and the second
+            uint32_t tmp = ft801_spi_rd32(REG_CTOUCH_TOUCH0_XY);
+            ty1 = tmp & 0xFFFF ;
+            tx1 = tmp >> 16 ;
+            
+            // read the xy of the second touch
+            tmp = ft801_spi_rd32(REG_CTOUCH_TOUCH1_XY);
+            ty2 = tmp & 0xFFFF ;
+            tx2 = tmp >> 16 ;
+            
+            
+            
+            // second touch detected
+            if ( !((tx2 == ty2) && ( tx2 == -32768)) )
+            {
+                                               
+                // calculate the direction
+                x_scale = ( tx1 > tx2 ) ? 8*((tx1 - tx2)) : 8*((tx2 - tx1)) ;
+                y_scale = ( ty1 > ty2 ) ? 4*((ty1 - ty2)) : 4*((ty2 - ty1)) ;
+                
+                tx1 = CONV_DIST(tx1) ;
+                tx2 = CONV_DIST(tx2) ;
+                ty1 = CONV_DIST(ty1) ;
+                ty2 = CONV_DIST(ty2) ;
+                
+               
+                
+            }
+            // only one touch
+            else
+            {
+                tx1 = ty1 = tx2 = ty2 = 0;
+            }
+            
+            
+            ft80x_gpu_eng_it_setActiveTask(TASK_GRAPH) ;
+            return true ;
+            
+        }
+        
+        
+    }
+    
+    
+    return true ;
+}
+
+bool graphExample_gpuit( const uint8_t itflags, void * const data )
+{
+    
+    uint16_t * myData = data ;
+    
+    uint8_t mask = FT_INT_CONVCOMPLETE |  FT_INT_TAG | FT_INT_TOUCH ;
+    if ( itflags & mask )
+    {
+        myData[0] = 1 ;
+    }
+    else
+    {
+        myData[0] = 0 ;
+    }
+    
+    
+    
+    return true ;
+}
 

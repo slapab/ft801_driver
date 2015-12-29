@@ -203,6 +203,8 @@ int main(void)
         
         // set the backlight pwm duty 0-128
         ft801_spi_mem_wr8(REG_PWM_DUTY, 25) ;
+        // enable the extended mode for touch-screen
+        ft801_spi_mem_wr8(REG_CTOUCH_EXTENDED, 0) ;
         
         
         
@@ -535,11 +537,21 @@ int main(void)
         g_task3.mp_shared_data = tab3 ;
         g_task3.m_id = TASK_KEYBOARD ;
         
+        // graph task
+        uint16_t tab4[5] = {0,0,0,0,0} ;
+        FT80xTask_TypeDef g_task4 ;
+        g_task4.mfp_doing = graphExample_doing ;
+        g_task4.mfp_painting = graphExample_painting;
+        g_task4.mfp_gpu_it = graphExample_gpuit ;
+        g_task4.mp_shared_data = tab4 ;
+        g_task4.m_id = TASK_GRAPH ;
+        
         
         // register tasks
         ft80x_gpu_eng_it_reg_task(&g_task1) ;
         ft80x_gpu_eng_it_reg_task(&g_task2) ;
         ft80x_gpu_eng_it_reg_task(&g_task3) ;
+        ft80x_gpu_eng_it_reg_task(&g_task4) ;
         
         
         // set active task
