@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 
 /**
@@ -35,7 +36,7 @@ void ft801_api_cmd_spinner_it(
 ) ;
 
 
-void ft801_api_cmd_text_it(
+size_t ft801_api_cmd_text_it(
     int16_t x,
     int16_t y,
     int16_t font,

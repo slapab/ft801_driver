@@ -4,7 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-
+#include "lcd_tasks_ids.h"
+#include "terminal_task.h"
 
 #define TASK_ID1 1
 bool task1_painting(void * const data);

@@ -22,7 +22,7 @@ uint16_t ft80x_spi_read_16bits( const uint32_t addr );
 
 
 // ##### DECLARATION OF LOCAL STATIC FUNCTIONS #####
-static void _cmd_append_str( const char * str ) ;
+static size_t _cmd_append_str( const char * str ) ;
 static void _cmd_append_buff( const uint8_t * const buff, const uint32_t size );
 
 
@@ -31,6 +31,8 @@ static void _cmd_append_buff( const uint8_t * const buff, const uint32_t size );
 // ##### DECLARE LOCAL (STATIC) GLOBALS #####
 static size_t reg_cmd_write_val ;    // holds value read from REG_CMD_WRITE before appending commands
 static size_t bytes_in_transaction ; // how many cmd bytes was appended to the buffer
+
+
 
 
 
@@ -92,7 +94,7 @@ void ft801_api_cmd_flush_it(void)
 
 
 
-void ft801_api_cmd_text_it(
+size_t ft801_api_cmd_text_it(
     int16_t x,
     int16_t y,
     int16_t font,
@@ -101,7 +103,7 @@ void ft801_api_cmd_text_it(
 )
 {
     if ( NULL == str )
-        return ;
+        return 0 ;
     
     
     // append into buffer right command
@@ -118,7 +120,7 @@ void ft801_api_cmd_text_it(
     ft801_api_cmd_append_it(tmp) ;
     
     // append the string to the buffer
-    _cmd_append_str( str );
+    return _cmd_append_str( str );
     
 }
 
@@ -425,7 +427,7 @@ void _cmd_append_byte( const uint8_t data )
 
 
 
-static void _cmd_append_str( const char * str )
+static size_t _cmd_append_str( const char * str )
 {
 
     size_t str_len = strlen( str ) + 1; // +1 for null char
@@ -445,6 +447,8 @@ static void _cmd_append_str( const char * str )
     
     
     bytes_in_transaction += str_len + str_padd ;
+    
+    return str_len ;
 }
 
 

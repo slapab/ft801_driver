@@ -28,7 +28,9 @@
 
 //#define _TEST_IT_API
 
-#define _TEST_GPU_ENGINE
+//#define _TEST_GPU_ENGINE
+
+#define _TEXT_BITMAP_EXAMPLE
 
 
 // Declare the descryptor for ring buffer
@@ -565,6 +567,43 @@ int main(void)
 
 
 #endif
+
+        
+#ifdef _TEXT_BITMAP_EXAMPLE
+        
+        // init it_api
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
+        // init the gpu_engine api
+        ft80x_gpu_eng_it_init() ;
+        
+        // terminal task
+        uint16_t tab_termianl[3] = {0,0,0} ;
+        FT80xTask_TypeDef g_terminal ;
+        g_terminal.mfp_doing = terminalTask_doing ;
+        g_terminal.mfp_painting = terminalTask_painting;
+        g_terminal.mfp_gpu_it = terminalTask_gpuit ;
+        g_terminal.mp_shared_data = tab_termianl ;
+        g_terminal.m_id = TASK_ETERMINAL_ID ;
+        
+        
+        // register tasks
+        ft80x_gpu_eng_it_reg_task(&g_terminal) ;
+        // set active task
+        ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
+        
+        // let print something
+        terminalTask_append_line("The implementation of computer monitor text mode on VGA-compatible hardware is quite complex. Its use on PC-compatible computers was widespread in 1980s–1990s (particularly under DOS systems), but persists today for some applications even on modern desktop computers. The main features of VGA text mode are colored (arbitrary 16 color palette) characters and their background, blinking, various shapes of the cursor (block/underline/hidden static/blinking), and loadable fonts (with various glyph sizes). The Linux console traditionally uses hardware VGA-compatible text modes, and the Win32 console environment has an ability to switch the screen to text mode for some text window sizes.");
+        terminalTask_append_line("\npabian") ;
+        
+        
+        while(1)
+        {
+            ft80x_it_check() ; // pooling the it_api
+            ft80x_gpu_eng_it_looper() ; // pooling the gpu_engine
+        }
+        
+#endif // end of _TEXT_BITMAP_EXAMPLE
+        
 
 
     }        

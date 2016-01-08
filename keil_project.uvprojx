@@ -351,7 +351,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -373,7 +373,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>.\Sources\inc;.\Sources\ft801_src;.\Sources\ft801_src\ft801_it_api;.\Sources\ft801_src\ft801_engine_it</IncludePath>
+              <IncludePath>.\Sources\inc;.\Sources\ft801_src;.\Sources\ft801_src\ft801_it_api;.\Sources\ft801_src\ft801_engine_it;.\Sources\lcd_tasks</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -565,6 +565,26 @@
               <FileName>ft80x_task.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\ft801_src\ft801_engine_it\ft80x_task.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>lcd_tasks</GroupName>
+          <Files>
+            <File>
+              <FileName>terminal_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\lcd_tasks\terminal_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>terminal_task.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\lcd_tasks\terminal_task.h</FilePath>
+            </File>
+            <File>
+              <FileName>lcd_tasks_ids.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\lcd_tasks\lcd_tasks_ids.h</FilePath>
             </File>
           </Files>
         </Group>
