@@ -4,6 +4,7 @@
 
 #include "ft80x_it_api_cmd.h"
 #include "ft80x_engine_it.h"
+#include "spi.h"
 
 
 #include <stddef.h>
@@ -83,24 +84,30 @@ bool terminalTask_painting (void * const data)
     
     ft801_api_cmd_append_it(CLEAR(1,1,1));
     
+    
+    // handle the text display:
     int16_t x_pos = 0 ;
     int16_t y_pos = 0 ;
     
+    size_t curr_line = _thisData.m_start_line ; //get the first line to display
     for ( int i = _thisData.m_lines; i >= 0 ; --i )
     {
-        size_t len = ft801_api_cmd_text_it(x_pos, y_pos, 18, 0, (const char *)&_thisData.m_buff[ _thisData.m_start_line ]);
+        size_t len = ft801_api_cmd_text_it(x_pos, y_pos, 18, 0, (const char *)&_thisData.m_buff[ curr_line ]);
         
-        if ( len == 0 ) break ;
+        if ( len == 0 ) break ; // skip displaying if there is no string inside of buffer
         
-        if ( (_thisData.m_start_line + len) < (_thisData.m_curr_pos-1))
+        // check if the next line will have valid data ( not an empty one)
+        if ( (curr_line + len) < (_thisData.m_curr_pos-1))
         {
             // points to the new line
-            _thisData.m_start_line += len ;
+            curr_line += len ;
             
             // calcualte the new y pos, and check if area's boundary was riched
             y_pos += _thisData.m_font_h ; 
             if ( y_pos >= _thisData.m_area_h )
+            {
                 break ;
+            }
         }
         else
         {
@@ -170,13 +177,13 @@ bool terminalTask_doing(void * const data)
         
         if ( tag == 10 ) //up 
         {
-            _thisData.m_curr_pos = _get_prev_line() ;
+            _thisData.m_start_line = _get_prev_line() ;
             // refresh task
             ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
         }
         else if ( tag == 20 ) //down
         {
-            _thisData.m_curr_pos = _get_next_line() ;
+            _thisData.m_start_line = _get_next_line() ;
             // refresh task
             ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
         }
@@ -264,12 +271,12 @@ void terminalTask_append_line( char * str )
 static size_t _get_prev_line(void)
 {
     
-    if ( 0 == _thisData.m_curr_pos ) 
-        return _thisData.m_curr_pos ;
+    if ( 0 == _thisData.m_start_line ) 
+        return 0;
     
     
     
-    int32_t pos = _thisData.m_curr_pos - 2 ; // this always should points to the
+    int32_t pos = _thisData.m_start_line - 2 ; // this always should points to the
                                         // beginning of each line, so substrate of 2 
                                         // is needed for skiping \0 of prev. str.
     
@@ -286,8 +293,8 @@ static size_t _get_prev_line(void)
 
 static size_t _get_next_line(void)
 {
-    size_t pos = strlen( (char*)&_thisData.m_buff[ _thisData.m_curr_pos] ) + 1;
+    size_t pos = strlen( (char*)&_thisData.m_buff[ _thisData.m_start_line] ) + 1;
     
-    return _thisData.m_curr_pos + pos ;
+    return _thisData.m_start_line + pos ;
 }
 
