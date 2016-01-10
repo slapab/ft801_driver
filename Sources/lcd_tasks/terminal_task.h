@@ -7,7 +7,7 @@
 
 
 // Public functions for user:
-void terminalTask_append_line( char * str ) ;
+void terminalTask_appendStr( const char * str ) ;
 
 
 bool terminalTask_painting (void * const) ;

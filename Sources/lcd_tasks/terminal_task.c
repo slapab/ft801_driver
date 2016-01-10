@@ -8,61 +8,108 @@
 
 
 #include <stddef.h>
-#include <string.h> // strlen
-
-
-// forward declaration of local functions: 
-static size_t _get_prev_line(void) ;
-static size_t _get_next_line(void) ;
 
 
 
+struct _ringbuffer_t
+{
+    uint8_t * m_buff ;
+    size_t m_size ;
+
+    volatile uint32_t m_head ; // index
+    volatile uint32_t m_tail ; // index
+
+
+};
+
+struct _disparea_conf_t
+{
+    /// define the area used to display text
+    uint16_t m_area_w ;
+    uint16_t m_area_h ;
+
+    /// sizes of used font | refer to the datasheet of the chip
+    uint8_t m_font_w ;
+    uint8_t m_font_h ;
+};
 
 
 // internal buffer for storing lines
 struct _container_t
 {
-    // define the area used to display tekst
-    uint16_t m_area_w ;
-    uint16_t m_area_h ;
- 
-    // buffer for storing the displayed tekst
-    uint8_t * m_buff ;
-    size_t m_size;
-    size_t m_curr_pos ; // points to the next free space in buffer
-    size_t m_start_line ; // the line from which it will be start printing
-    
-    
-    // font widht and height // refer to the datasheet of the chip
-    uint8_t m_font_w ;
-    uint8_t m_font_h ;
-    
-    uint8_t m_chars ; // chars in line
-    uint8_t m_lines ; // total line in given area
-       
+    /// keeps the configuration of display area and font
+    struct _disparea_conf_t ms_disp_conf ;
+
+    /* ALL which consist of text buffer */
+    /// buffer for storing the displayed text
+    struct _ringbuffer_t ms_rbuff ;
+    /// the line from which it will be start printing
+    size_t m_start_line ; // index
+
+    /// keeps total number of strings in the buffer
+    size_t m_total_lines_no ;
+
+    /// keeps number of current line from the buffer
+    size_t m_curr_line_no ;
+
+
+    /* calculated by software */
+
+    /// chars in line
+    uint8_t m_chars ;
+    /// total line in given area
+    uint8_t m_lines ;
+
 } ;
 
-static uint8_t _string_buffer[2000] ;
+
+
+// Define the internal ring buffer for storing characters
+static const uint16_t _rbuffer_size = 2048 ; // NOTE this value should be power of 2!
+static uint8_t _string_buffer[_rbuffer_size] ;
+
 static struct _container_t _thisData =
-    {   
-        // define the area used for displaying the
-        440,
-        100,
-        
-        // buffer params
-        _string_buffer,
-        2000, // size of the buffer
-        0, // start from beggining
-        0, // print from the beggingin
-        
-        // with, height for the font 18/19
-        8,
-        16,
-        
-        // other values computed by software
+    {
+        // AREA USED FOR DISPLAYING STRINGS
+        {
+            435, // width of area
+            100, // height of area
+            8,   // width of used font ( ft801: 18/19 )
+            16   // height of used font ( ft801: 18/19 )
+        },
+
+        // RING BUFFER FOR STRING STRINGS
+        {
+            _string_buffer, // pointer to the buffer
+            _rbuffer_size,  // size of the buffer
+            0,              // head to zero
+            0,              // tail to zero
+        },
+
+        // DATA USED FOR HANDLING THE DISPLAYED DATA
+        0,  // the start line (string) in the buffer
+        0,  // total lines in the ring buffer
+        0,  // number of current line pointed by m_start_line
+
+
+        // VARIABLES WHICH DEFINE THE MAXIMUM CHARACTERS INSIDE OF AREA
+        // THIS VALUES ARE CALCULATED BY SOFTWARE
         0,
         0
     };
+
+
+
+
+// forward declaration of local functions: 
+static void _move_to_next_line(void) ;
+static void _move_to_prev_line(void) ;
+static void _print_text(void);
+static bool _is_rb_full(void) ;
+static bool _is_rb_empty(void) ;
+
+
+
 
     
     
@@ -85,35 +132,23 @@ bool terminalTask_painting (void * const data)
     ft801_api_cmd_append_it(CLEAR(1,1,1));
     
     
-    // handle the text display:
-    int16_t x_pos = 0 ;
-    int16_t y_pos = 0 ;
+    // print the text
+    _print_text() ;
     
-    size_t curr_line = _thisData.m_start_line ; //get the first line to display
-    for ( int i = _thisData.m_lines; i >= 0 ; --i )
-    {
-        size_t len = ft801_api_cmd_text_it(x_pos, y_pos, 18, 0, (const char *)&_thisData.m_buff[ curr_line ]);
-        
-        if ( len == 0 ) break ; // skip displaying if there is no string inside of buffer
-        
-        // check if the next line will have valid data ( not an empty one)
-        if ( (curr_line + len) < (_thisData.m_curr_pos-1))
-        {
-            // points to the new line
-            curr_line += len ;
-            
-            // calcualte the new y pos, and check if area's boundary was riched
-            y_pos += _thisData.m_font_h ; 
-            if ( y_pos >= _thisData.m_area_h )
-            {
-                break ;
-            }
-        }
-        else
-        {
-            break ;
-        }
-    }
+    // draw frame rects
+    uint8_t d = 2 * _thisData.m_lines ;
+    ft801_api_cmd_append_it(SAVE_CONTEXT());
+    ft801_api_cmd_append_it(LINE_WIDTH(2*16) );
+    ft801_api_cmd_append_it(COLOR_RGB(0, 80, 100) );
+    ft801_api_cmd_append_it(LINE_WIDTH(2*16) );
+    ft801_api_cmd_append_it(BEGIN(FT_LINE_STRIP));
+    ft801_api_cmd_append_it(VERTEX2F(0, 0));
+    ft801_api_cmd_append_it(VERTEX2F(0, 16*(_thisData.ms_disp_conf.m_area_h+d)));
+    ft801_api_cmd_append_it(VERTEX2F(16*(_thisData.ms_disp_conf.m_area_w+d), 16*(_thisData.ms_disp_conf.m_area_h+d)));
+    ft801_api_cmd_append_it(VERTEX2F(16*(_thisData.ms_disp_conf.m_area_w+d), 0));
+    
+    ft801_api_cmd_append_it(END());
+    ft801_api_cmd_append_it(RESTORE_CONTEXT());
     
     
     // draw the slider
@@ -177,13 +212,13 @@ bool terminalTask_doing(void * const data)
         
         if ( tag == 10 ) //up 
         {
-            _thisData.m_start_line = _get_prev_line() ;
+            _move_to_prev_line() ;
             // refresh task
             ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
         }
         else if ( tag == 20 ) //down
         {
-            _thisData.m_start_line = _get_next_line() ;
+            _move_to_next_line() ;
             // refresh task
             ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
         }
@@ -214,87 +249,306 @@ bool terminalTask_gpuit(const uint8_t itflags, void * const data)
 
 
 
-
-void terminalTask_append_line( char * str )
+void _print_text(void)
 {
-    // compute the needed params to handle text wraping on the screen
-    _thisData.m_lines = _thisData.m_area_h / _thisData.m_font_h ;
-    _thisData.m_chars = _thisData.m_area_w / _thisData.m_font_w ;
+    // handle the text display:
+    int16_t x_pos = 5 ;
+    int16_t y_pos = 0 ;
     
-    
-    size_t b_pos = _thisData.m_curr_pos ;
-    for ( size_t c = 0, char_no = 1;
-            (str[c] != '\0') && (b_pos < _thisData.m_size-1) ;
-            ++c, ++char_no, ++b_pos )
+    if ( true == _is_rb_empty() )
     {
-        // conwert to new line if area boundary (x) was reached
+        return ;
+    }
+
+    uint8_t * const pbuff = _thisData.ms_rbuff.m_buff ;
+    const size_t size = _thisData.ms_rbuff.m_size ;
+
+    uint32_t start_line = _thisData.m_start_line ;
+
+    int32_t l_no = (_thisData.m_lines > _thisData.m_total_lines_no)?
+            (_thisData.m_total_lines_no) : (_thisData.m_lines) ;
+
+    char tmp_buff [ 480/8 ] ;
+    // display lines
+    for( ;0 < l_no; --l_no )
+    {
+        uint8_t i = 0;
+        while( pbuff[start_line] != '\0' ) //&&  (hidx != start_line) )
+        {
+            tmp_buff[i] = (char)pbuff[start_line] ;
+            ++i ;
+            ++start_line ;
+            
+            // wrap the ring buffer
+            if ( size <= start_line)
+                start_line = 0 ;
+        }
+        tmp_buff[i] = '\0' ;
+        ++start_line ; // skip the null and point to first char of the next line
+        if ( size <= start_line )
+        {
+            start_line = 0;
+        }
+        
+        // push to the LCD buffer
+        ft801_api_cmd_text_it(x_pos, y_pos, 18, 0, tmp_buff);
+        y_pos += _thisData.ms_disp_conf.m_font_h + 2;
+    }
+}
+
+
+
+
+
+
+
+void terminalTask_appendStr( const char * str )
+{
+    uint8_t * const pbuff  =  _thisData.ms_rbuff.m_buff ;
+
+    volatile uint32_t * hidx = &_thisData.ms_rbuff.m_head ;
+    volatile uint32_t * tidx = &_thisData.ms_rbuff.m_tail ;
+    const size_t size = _thisData.ms_rbuff.m_size ;
+
+
+
+    // compute the needed params to handle text right edge on the screen
+    _thisData.m_lines = _thisData.ms_disp_conf.m_area_h / _thisData.ms_disp_conf.m_font_h ;
+    _thisData.m_chars = _thisData.ms_disp_conf.m_area_w / _thisData.ms_disp_conf.m_font_w ;
+
+
+    // copy string to the internal ring buffer
+    for ( size_t c = 0, char_no = 1 ; str[c] != '\0' ; ++c, ++char_no )
+    {
+        if ( true == _is_rb_full() )
+        {
+            // CHECK IF ATTEMPING COPY CHAR. WILL OVERWRITE THE OLD STRING
+            if ( ('\0' == pbuff[ *hidx ]) && ( 0 < _thisData.m_total_lines_no) )
+            {
+               -- _thisData.m_total_lines_no ;
+            }
+
+           // Move tail forward by one : calculate value by use optimalized modulo operation
+           *tidx = ((*tidx)+1) & ( size-1 ) ;
+        }
+
+
+
+        // HANDLE LINE OVERFLOW ( create new string ):
         if ( char_no > _thisData.m_chars )
         {
             char_no = 1;
-            
             // append \0 to indicate the new line
-            _thisData.m_buff[ b_pos ] = '\0' ;
-            ++b_pos ;
-            
-            // check with buffer free space
-            if ( b_pos >= (_thisData.m_size -2))
-                break ;
+            pbuff[ *hidx ] = '\0' ;
+            *hidx = ( (*hidx) +1) & ( size - 1 ) ;
+
+            // update buffer statistics
+            ++ _thisData.m_total_lines_no;
+
+            // check fullness again, if is full then move forward the tail
+            if ( true == _is_rb_full() )
+            {
+               *tidx = ((*tidx) +1) & ( size-1 ) ;
+            }
         }
-        
+
+        //APPEND CHARACTER TO THE RING BUFFER
         if ( '\n' == str[c] )
+        // Handle \n character -> push it as \0
         {
-            //if ( 0 < c ) {
-                // replace with '\0'
-                char_no = 1 ;
-                _thisData.m_buff[ b_pos ] = '\0' ;
-                
-            //}
+            char_no = 1 ;
+            pbuff[ *hidx ] = '\0' ;
+
+            // update buffer statistics
+            ++ _thisData.m_total_lines_no;
         }
         else
+        // push normal character
         {
-            // copy the byte
-            _thisData.m_buff[ b_pos ] = str[c] ;
+            pbuff[ *hidx ] = str[c] ;
         }
 
+        // calculate the new head value by use optimalized modulo operation
+        *hidx = ( (*hidx) +1 ) & ( size - 1 ) ;
     }
-    
-    // append the \0
-    _thisData.m_buff[ b_pos ] = '\0' ;
-    _thisData.m_curr_pos = b_pos + 1 ;
-    
+
+    // add the end of string character for the new string [ the last string ]
+    if ( true == _is_rb_full() )
+    {
+       *tidx = ((*tidx)+1) & ( size-1 ) ;
+    }
+
+    pbuff[ *hidx ] = '\0' ;
+    *hidx = ( (*hidx) + 1) & ( size - 1 ) ;
+    // Update buffer statistics
+    ++ _thisData.m_total_lines_no ;
+
+
+    // DELETE BORKEN STRING IF OVERRFLOW OCCURED
+    if ( true == _is_rb_full() )
+    {
+       *tidx = *hidx ;//((*tidx)+1) & ( size-1 ) ;
+
+       // now 'delete' the old broken string, and move tail to the first
+       // following, good one string
+       bool test = false ;
+       while ( pbuff[*tidx] != '\0' )
+       {
+           *tidx = ((*tidx)+1) & ( size-1 ) ;
+           test = true ;
+       }
+       // now move tail pointer to the first element of good one string
+       *tidx = ((*tidx)+1) & ( size-1 ) ;
+
+       // Update buffer statistics
+       if ( (true == test) && ( 1 < _thisData.m_total_lines_no ) )
+           -- _thisData.m_total_lines_no ;
+    }
+
+
+    // UPDATE THE m_start_line INDEX!
+    if ( _thisData.m_total_lines_no <= _thisData.m_lines )
+    {
+        _thisData.m_start_line = _thisData.ms_rbuff.m_tail ;
+        _thisData.m_curr_line_no = 1;
+    }
+    else
+    // SET THE START LINE AT m_lines from the end of buffer
+    {
+        uint32_t pos = ( _thisData.ms_rbuff.m_head - 2 ) & (size -1); // -2 to skip \0 of the first line
+        for ( int32_t i = _thisData.m_lines ;
+                0 < i ; --i)
+        {
+            while ( pbuff[pos] != '\0')
+            {
+                pos = (pos -1 ) & ( size - 1);
+            }
+            pos = (pos -1 ) & ( size - 1);
+
+        }
+
+        _thisData.m_start_line = (pos +2 ) & ( size - 1) ;
+        _thisData.m_curr_line_no = _thisData.m_total_lines_no - _thisData.m_lines +1 ;
+    }
 }
 
 
 
 
 
-static size_t _get_prev_line(void)
+
+
+
+
+
+// LOCAL HELPER FUNCTIONS
+
+static void _move_to_prev_line(void)
 {
-    
-    if ( 0 == _thisData.m_start_line ) 
-        return 0;
-    
-    
-    
-    int32_t pos = _thisData.m_start_line - 2 ; // this always should points to the
-                                        // beginning of each line, so substrate of 2 
-                                        // is needed for skiping \0 of prev. str.
-    
-    uint8_t * buff = _thisData.m_buff ;
-    for( ; (pos >= 0 ) ; --pos ) {
-        if ( buff[pos] == '\0' ) 
+
+    const uint32_t tidx = _thisData.ms_rbuff.m_tail ;
+    const size_t size = _thisData.ms_rbuff.m_size ;
+
+    if ( true == _is_rb_empty() )
+    {
+        _thisData.m_start_line = _thisData.ms_rbuff.m_head ;
+        return;
+    }
+    else if ( tidx == _thisData.m_start_line )
+    // do not go back not more than tail
+    {
+        return ;
+    }
+
+
+    // this always should points to the
+    // beginning of each line, so substrate of 2
+    // is needed for skipping \0 of prev. str.
+    uint32_t pos = _thisData.m_start_line - 2 ;
+
+    uint8_t * buff = _thisData.ms_rbuff.m_buff ;
+    for( ; (tidx != pos ) ;  pos = (pos - 1) & (size -1 ) ) {
+        if ( buff[pos] == '\0' )
             break ;
     }
-    
-    ++pos ; // points to valid string or to the beggining of the line
-    
-    return pos ;
+    // update statistics
+    --_thisData.m_curr_line_no ;
+
+    if ( tidx == pos )
+        _thisData.m_start_line = pos ;
+    else
+        // points to valid string or to the beginning of the line
+        _thisData.m_start_line = (pos + 1) & (size -1) ;
 }
 
-static size_t _get_next_line(void)
+
+
+
+
+
+
+static void _move_to_next_line(void)
 {
-    size_t pos = strlen( (char*)&_thisData.m_buff[ _thisData.m_start_line] ) + 1;
-    
-    return _thisData.m_start_line + pos ;
+    // do not go further if all remaining lines can be displayed on the area:
+    if ( true == _is_rb_empty() )
+    // nothing to display, set the start_line to the tail(head) index
+    {
+        _thisData.m_start_line = _thisData.ms_rbuff.m_tail ;
+        return ;
+    }
+    else if ( _thisData.m_total_lines_no <= _thisData.m_lines )
+    // all lines can be displayed on the one screen, so set start line to the tail
+    {
+        _thisData.m_start_line = _thisData.ms_rbuff.m_tail ;
+        return ;
+    }
+
+    // more than one screen can be displayed
+
+    const uint32_t left_lines = _thisData.m_total_lines_no - _thisData.m_curr_line_no +1 ;
+
+    if ( left_lines > _thisData.m_lines )
+    // ok, can go forward by one line
+    {
+        const uint8_t  * const pbuff = _thisData.ms_rbuff.m_buff;
+        const size_t size = _thisData.ms_rbuff.m_size ;
+        const uint32_t hidx = _thisData.ms_rbuff.m_head ;
+        uint32_t idx = _thisData.m_start_line ;
+
+        // go to the next line
+        for ( ; idx != hidx ; idx = (idx+1) & ( size -1))
+        {
+            if (pbuff[idx] == '\0')
+            // found the end of the current line
+            {
+                // update, point to the first char of the next line
+                _thisData.m_start_line = (idx+1) & ( size -1 ) ;
+                // update statistics
+                ++_thisData.m_curr_line_no ;
+                break ;
+            }
+        }
+    }
+    return ;
 }
+
+
+
+inline static bool _is_rb_full(void)
+{
+    const uint32_t hidx = (_thisData.ms_rbuff.m_head + 1) & (_thisData.ms_rbuff.m_size - 1) ;
+    if ( hidx == _thisData.ms_rbuff.m_tail )
+        return true ;
+    else
+        return false ;
+}
+
+inline static bool _is_rb_empty(void)
+{
+    if ( _thisData.ms_rbuff.m_head == _thisData.ms_rbuff.m_tail )
+        return true ;
+    else
+        return false ;
+}
+
 
