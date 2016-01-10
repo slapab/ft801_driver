@@ -408,10 +408,43 @@ void ft801_api_cmd_gauge_it(
     ft801_api_cmd_append_it( tmp ) ;
     
     // wrap range parameter
-   tmp = ((uint32_t)range << 16) | (uint32_t)val ;
+    tmp = ((uint32_t)range << 16) | (uint32_t)val ;
     ft801_api_cmd_append_it( tmp ) ;
 }
 
+
+
+void ft801_api_cmd_scrollbar_it(
+    int16_t x, 
+    int16_t y, 
+    int16_t w, 
+    int16_t h, 
+    uint16_t options, 
+    uint16_t val, 
+    uint16_t size, 
+    uint16_t range
+)
+{
+    // append to the buffer the the command
+    ft801_api_cmd_append_it( CMD_SCROLLBAR );
+    
+    uint32_t tmp ;
+    // wrap x, y position
+    tmp = ((uint32_t)y << 16) | (uint32_t)x ;
+    ft801_api_cmd_append_it(tmp) ;
+    
+    // wrap w, h parameters
+    tmp = ((uint32_t)h << 16) | (uint32_t)w ;
+    ft801_api_cmd_append_it( tmp ) ;
+    
+    // wrap options and val parameters
+    tmp = ((uint32_t)val << 16) | (uint32_t)options ;
+    ft801_api_cmd_append_it( tmp ) ;
+    
+    // wrap the size and range parameters
+    tmp = ((uint32_t)range << 16) | (uint32_t)size ;
+    ft801_api_cmd_append_it( tmp ) ;
+}
 
 
 

@@ -125,4 +125,17 @@ void ft801_api_cmd_gauge_it(
     uint16_t range
 ) ;
 
+
+
+void ft801_api_cmd_scrollbar_it(
+    int16_t x, 
+    int16_t y, 
+    int16_t w, 
+    int16_t h, 
+    uint16_t options, 
+    uint16_t val, 
+    uint16_t size, 
+    uint16_t range
+);
+
 #endif

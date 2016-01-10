@@ -9,7 +9,10 @@
 
 #include <stddef.h>
 
-
+#define SCROLL_TAG 150
+#define TEXT_TAG 151
+#define TEXT_UP_TAG 152
+#define TEXT_DW_TAG 153
 
 struct _ringbuffer_t
 {
@@ -72,8 +75,8 @@ static struct _container_t _thisData =
     {
         // AREA USED FOR DISPLAYING STRINGS
         {
-            435, // width of area
-            100, // height of area
+            476, // width of area
+            230, // height of area
             8,   // width of used font ( ft801: 18/19 )
             16   // height of used font ( ft801: 18/19 )
         },
@@ -107,7 +110,8 @@ static void _move_to_prev_line(void) ;
 static void _print_text(void);
 static bool _is_rb_full(void) ;
 static bool _is_rb_empty(void) ;
-
+static void _print_scrollbar(void);
+static void _print_text_dw_up(void);
 
 
 
@@ -117,12 +121,6 @@ static bool _is_rb_empty(void) ;
 bool terminalTask_painting (void * const data)
 {
     uint16_t * myData = data ;
-    
-//    // compute the needed params to handle text wraping on the screen
-//    _thisData.m_lines = _thisData.m_area_h / _thisData.m_font_h ;
-//    _thisData.m_chars = _thisData.m_area_w / _thisData.m_font_w ;
-    
-    
     
     // start creating the screen
     
@@ -135,66 +133,40 @@ bool terminalTask_painting (void * const data)
     // print the text
     _print_text() ;
     
+    
     // draw frame rects
-    uint8_t d = 2 * _thisData.m_lines ;
+    uint8_t lw = 2 ;
     ft801_api_cmd_append_it(SAVE_CONTEXT());
     ft801_api_cmd_append_it(LINE_WIDTH(2*16) );
     ft801_api_cmd_append_it(COLOR_RGB(0, 80, 100) );
-    ft801_api_cmd_append_it(LINE_WIDTH(2*16) );
+    ft801_api_cmd_append_it(LINE_WIDTH(lw*16) );
     ft801_api_cmd_append_it(BEGIN(FT_LINE_STRIP));
-    ft801_api_cmd_append_it(VERTEX2F(0, 0));
-    ft801_api_cmd_append_it(VERTEX2F(0, 16*(_thisData.ms_disp_conf.m_area_h+d)));
-    ft801_api_cmd_append_it(VERTEX2F(16*(_thisData.ms_disp_conf.m_area_w+d), 16*(_thisData.ms_disp_conf.m_area_h+d)));
-    ft801_api_cmd_append_it(VERTEX2F(16*(_thisData.ms_disp_conf.m_area_w+d), 0));
+    ft801_api_cmd_append_it(VERTEX2II(lw, 0,0,0));
+    ft801_api_cmd_append_it(VERTEX2II(lw, (_thisData.ms_disp_conf.m_area_h),0,0));
+    ft801_api_cmd_append_it(VERTEX2II((_thisData.ms_disp_conf.m_area_w+lw), _thisData.ms_disp_conf.m_area_h,0,0));
+    ft801_api_cmd_append_it(VERTEX2II((_thisData.ms_disp_conf.m_area_w+lw), 0,0,0));
     
     ft801_api_cmd_append_it(END());
     ft801_api_cmd_append_it(RESTORE_CONTEXT());
     
     
-    // draw the slider
-    ft801_api_cmd_append_it(POINT_SIZE(18*16)) ;
-    ft801_api_cmd_append_it(BEGIN(FT_POINTS)) ;
-    ft801_api_cmd_append_it(COLOR_RGB(160,50,50)) ;
-    ft801_api_cmd_append_it(TAG(10)) ;
-    ft801_api_cmd_append_it(VERTEX2F(460*16, 100*16)) ; // up 
-    ft801_api_cmd_append_it(TAG(20)) ;
-    ft801_api_cmd_append_it(VERTEX2F(460*16, 200*16)) ; // down
-    ft801_api_cmd_append_it(END()) ;
+    // draw the text up down navigation
     
+    _print_text_dw_up() ;
+
     
-    
-    // for now draw the up and down button
-    
+    //_print_scrollbar() ;
     
     
 
-//    // version with bitmaps    
-//    // LOAD text into GPU RAM
-//    uint8_t cb = 127 ;
-//    uint8_t tab[] = {'s', cb, 'l', cb, 'a', cb, 'w', cb } ;
-//    //ft801_api_cmd_memwrite_it(0, (uint8_t*)"slawek pabian :-) :-D", 21) ;
-//    
-//    ft801_api_cmd_memwrite_it(0,tab, 8);
-//    // set the bitmap properties
-//    ft801_api_cmd_append_it(CLEAR(1,1,1));
-//    
-//    
-//    ft801_api_cmd_append_it(BITMAP_SOURCE(0));
-//    ft801_api_cmd_append_it(BITMAP_LAYOUT(FT_TEXTVGA,7, 3));
-//    ft801_api_cmd_append_it(BITMAP_SIZE(FT_BILINEAR,FT_BORDER,FT_BORDER,8*7,272));
-//    
-//    ft801_api_cmd_append_it(BEGIN(FT_BITMAPS));
-//    ft801_api_cmd_append_it(VERTEX2F(0,0));
-//    ft801_api_cmd_append_it(END());
+    
     
     
     
     
     ft801_api_cmd_append_it(DISPLAY());
     ft801_api_cmd_append_it(CMD_SWAP);
-    
-    ft801_api_cmd_flush_it();
-    
+    ft801_api_cmd_flush_it() ;
     
     return true;
 }
@@ -208,15 +180,41 @@ bool terminalTask_doing(void * const data)
     {
         myData[0] =  0 ; 
         
-        uint8_t tag = ft801_spi_rd8(REG_TOUCH_TAG);
+        uint32_t range = ft801_spi_rd32(REG_TRACKER);
+        uint8_t tag = range & (0xFF);//ft801_spi_rd8(REG_TOUCH_TAG);
+        range >>= 16; //get the range value
         
-        if ( tag == 10 ) //up 
+        if ( tag == TEXT_UP_TAG )
         {
+//            static uint32_t prev = 0 ;
+//            static uint8_t avg = 0;
+//            ++avg ;
+//            if ( avg == 10 )
+//            {   
+//                avg = 0 ;
+//                uint32_t line = (range*_thisData.m_total_lines_no)/65536;
+//                
+//                if ((int32_t)(prev - range) > 0)
+//                {
+//                    _move_to_prev_line() ;
+//                }
+//                else if ((int32_t)(prev - range) < 0)
+//                {
+//                    _move_to_next_line() ;
+//                }
+//                prev = range ;
+//                ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
+//            }
+//            if ( range < 32000 )
+//                _move_to_prev_line() ;
+//            else
+//                _move_to_next_line() ;
+            
             _move_to_prev_line() ;
             // refresh task
             ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
         }
-        else if ( tag == 20 ) //down
+        else if ( tag == TEXT_DW_TAG ) //down
         {
             _move_to_next_line() ;
             // refresh task
@@ -233,7 +231,7 @@ bool terminalTask_gpuit(const uint8_t itflags, void * const data)
 {
     uint16_t * myData = data ;
 
-    uint8_t mask = /*FT_INT_CONVCOMPLETE | */ FT_INT_TAG /*| FT_INT_TOUCH*/ ;
+    uint8_t mask = /*FT_INT_CONVCOMPLETE |*/ FT_INT_TAG | FT_INT_TOUCH ;
     if ( itflags & mask )
     {
         myData[0] = 1 ;
@@ -292,13 +290,74 @@ void _print_text(void)
         
         // push to the LCD buffer
         ft801_api_cmd_text_it(x_pos, y_pos, 18, 0, tmp_buff);
-        y_pos += _thisData.ms_disp_conf.m_font_h + 2;
+        y_pos += _thisData.ms_disp_conf.m_font_h ;
     }
 }
 
 
+static void _print_text_dw_up(void)
+{
+    if ( _thisData.m_total_lines_no <= _thisData.m_lines )
+    {
+        return ;
+    }
+    ft801_api_cmd_append_it(SAVE_CONTEXT());
+    ft801_api_cmd_append_it(COLOR_A(30));
+    ft801_api_cmd_append_it(BEGIN(FT_RECTS)) ;
+    ft801_api_cmd_append_it(COLOR_RGB(255,255,255)) ;
+    if ( _thisData.m_curr_line_no > 1 )
+    {
+        ft801_api_cmd_append_it(TAG(TEXT_UP_TAG)) ;
+        ft801_api_cmd_append_it(VERTEX2II(0,0,0, 0)) ; // up 
+        ft801_api_cmd_append_it(VERTEX2II(_thisData.ms_disp_conf.m_area_w, 
+            20,0,0)) ; // up 
+    }
+    
+    if ( (_thisData.m_curr_line_no + _thisData.m_lines -1) != _thisData.m_total_lines_no ) 
+    {
+        ft801_api_cmd_append_it(TAG(TEXT_DW_TAG)) ;
+        ft801_api_cmd_append_it(VERTEX2II(0,
+            _thisData.ms_disp_conf.m_area_h-20,0, 0)) ; // dw 
+        ft801_api_cmd_append_it(VERTEX2II(_thisData.ms_disp_conf.m_area_w, 
+            _thisData.ms_disp_conf.m_area_h,0,0)) ; // dw
+    }
+    ft801_api_cmd_append_it(END()) ;
+    ft801_api_cmd_append_it(RESTORE_CONTEXT());
+}
 
 
+//static void _print_scrollbar(void)
+//{
+//    ft801_api_cmd_append_it( TAG(SCROLL_TAG) );
+//    ft801_api_cmd_fgcolor_it( COLOR_RGB(200,200,200) );
+//    
+//    uint16_t val, range, sc_size ;
+//    if ( _thisData.m_total_lines_no <= _thisData.m_lines )
+//    {
+//        val = 0;
+//        range = 1 ;
+//        sc_size = 1;
+//    }
+//    else
+//    {
+//        sc_size = 0;
+//        uint16_t half = _thisData.m_total_lines_no >> 1 ;//diwide by 2
+//        if ( _thisData.m_curr_line_no < half )
+//            val = (_thisData.m_curr_line_no /*+ _thisData.m_lines*/ -1) ;
+//        else
+//            val = (_thisData.m_curr_line_no + _thisData.m_lines -1) ;
+//        range = _thisData.m_total_lines_no;
+//        
+//    }
+//        
+//    
+//    ft801_api_cmd_scrollbar_it(460, 20, 10, 232, FT_OPT_FLAT,
+//        val,
+//        sc_size, // size of scroll button ( probably in % )
+//        range);
+//    ft801_api_cmd_track_it(460, 20, 10, 232, SCROLL_TAG);
+//    ft801_api_cmd_append_it( TAG(0) );
+//}
 
 
 

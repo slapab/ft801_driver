@@ -594,6 +594,10 @@ int main(void)
         // let print something
         terminalTask_appendStr("The implementation of computer monitor text mode on VGA-compatible hardware is quite complex. Its use on PC-compatible computers was widespread in 1980s–1990s (particularly under DOS systems), but persists today for some applications even on modern desktop computers. The main features of VGA text mode are colored (arbitrary 16 color palette) characters and their background, blinking, various shapes of the cursor (block/underline/hidden static/blinking), and loadable fonts (with various glyph sizes). The Linux console traditionally uses hardware VGA-compatible text modes, and the Win32 console environment has an ability to switch the screen to text mode for some text window sizes.");
         terminalTask_appendStr("\nSlawomir Pabian") ;
+        terminalTask_appendStr("elo");
+        terminalTask_appendStr("linia");
+        terminalTask_appendStr("testowa linia");
+        terminalTask_appendStr("kolejna");
         
         
         while(1)
