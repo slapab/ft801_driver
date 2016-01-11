@@ -141,11 +141,12 @@ bool terminalTask_painting (void * const data)
     _print_text() ;
     
     
-    // draw frame rects
+    // draw frame rects around the text
     uint8_t lw = 2 ;
     ft801_api_cmd_append_it(SAVE_CONTEXT());
     ft801_api_cmd_append_it(LINE_WIDTH(2*16) );
-    ft801_api_cmd_append_it(COLOR_RGB(0, 80, 100) );
+    ft801_api_cmd_append_it(COLOR_RGB(0x21,0x96,0xF3) );
+    ft801_api_cmd_append_it(COLOR_A(127)) ;
     ft801_api_cmd_append_it(LINE_WIDTH(lw*16) );
     ft801_api_cmd_append_it(BEGIN(FT_LINE_STRIP));
     ft801_api_cmd_append_it(VERTEX2II(lw, 0,0,0));
@@ -342,17 +343,25 @@ static void _print_text_dw_up(void)
 static void _print_keybard_button(void)
 {
     ft801_api_cmd_append_it(SAVE_CONTEXT());
+    
+    // print the cancel button
+    ft801_api_cmd_fgcolor_it(COLOR_RGB(0xF4,0x43,0x36));//#F44336
+    ft801_api_cmd_button_it(360, 240, 50, 28, 18, FT_OPT_FLAT, "X");
+    // print the time e.g
+    ft801_api_cmd_text_it(440, 248, 18, 0, "18:21");
+    
+    // print show keyboard button
     ft801_api_cmd_append_it(COLOR_RGB(0xFF,0xFF,0xFF)) ;
     ft801_api_cmd_fgcolor_it(COLOR_RGB(0x21,0x96,0xF3));
     if ( false == show_keyboard) 
     {
         ft801_api_cmd_append_it(TAG(KEYBOARD_TAG));
-        ft801_api_cmd_button_it(5, 250, 30, 20, 18, 0, "^") ;
+        ft801_api_cmd_button_it(5, 250, 30, 20, 26, FT_OPT_FLAT, "^") ;
     }
     else
     {
         ft801_api_cmd_append_it(TAG(KEYBOARD_TAG));
-        ft801_api_cmd_button_it(5, 250, 30, 20, 18, 0, "v") ;
+        ft801_api_cmd_button_it(5, 250, 30, 20, 18, FT_OPT_FLAT, "_") ;
     }
     ft801_api_cmd_append_it(TAG(1));
     ft801_api_cmd_append_it(RESTORE_CONTEXT());
@@ -370,10 +379,11 @@ static void _print_keybard(void)
     const char c_3r[] = "zxcvbnm,./" ;
     
     
-    const uint8_t key_x_dist = 5 ;
-    const uint8_t key_y_dist = 120 ;
     const uint8_t key_w = 24 ;
     const uint8_t key_h = 28 ;
+    const uint8_t key_x_dist = 50 ;
+    const uint16_t key_y_dist = 272 - ( 4 * key_h ) - 10 ;
+    
     const uint8_t key_dist = key_h + 2 ;
     
     const char * pc_1r = c_1r ;
@@ -381,18 +391,50 @@ static void _print_keybard(void)
     const char * pc_3r = c_3r ;
     
     ft801_api_cmd_append_it(SAVE_CONTEXT());
+    
+    
     ft801_api_cmd_append_it(COLOR_RGB(0x00,0x00,0x00)) ;
     ft801_api_cmd_fgcolor_it(COLOR_RGB(0x9E,0x9E,0x9E));//#9E9E9E
+    
     
     ft801_api_cmd_keys_it( key_x_dist, key_y_dist, 12*key_w, key_h, 18, 0, pc_1r) ;
     ft801_api_cmd_keys_it( key_x_dist, key_y_dist+key_dist, 12*key_w, key_h, 18, 0, pc_2r) ;
     ft801_api_cmd_keys_it( key_x_dist, key_y_dist+2*key_dist, 12*key_w, key_h, 18, 0, pc_3r) ;
-    //ft801_api_cmd_keys_it( key_x_dist, key_y_dist+3*key_dist, 12*key_w, key_h, 18, 0, pc_3r) ;
-    ft801_api_cmd_button_it( key_x_dist + 4*key_w, key_y_dist+3*key_dist, 4*key_w, key_h, 18,0, "") ;
+    // shift key
+    ft801_api_cmd_button_it( key_x_dist , key_y_dist+(3*key_dist),
+           _thisData.ms_disp_conf.m_font_w+(2*key_w), key_h, 18, 0, "Shift");
+    // space key
+    ft801_api_cmd_button_it( key_x_dist + 4*key_w, key_y_dist+3*key_dist,
+            (4*key_w), key_h, 18,0, "") ; 
+    // ?123 key
+    ft801_api_cmd_button_it( key_x_dist + (2*_thisData.ms_disp_conf.m_font_w) + (9*key_w),
+            key_y_dist+(3*key_dist),
+            _thisData.ms_disp_conf.m_font_w + (2*key_w), key_h, 18,0, "?123") ;
+    
+    // the OK/APPLY button
+    ft801_api_cmd_append_it(SAVE_CONTEXT()) ;
+    ft801_api_cmd_append_it( COLOR_RGB( 255, 255, 255) ) ;
+    ft801_api_cmd_fgcolor_it(COLOR_RGB(0x8B, 0xC3, 0x4A)); //8BC34A
+    ft801_api_cmd_button_it( 360, 180, 50, 28, 18, FT_OPT_FLAT, "Apply");
+    ft801_api_cmd_append_it(RESTORE_CONTEXT()) ;
+    
+    // PRINT THE INPUT AREA
+    ft801_api_cmd_append_it( COLOR_RGB( 255, 255, 255) ) ;
+    ft801_api_cmd_append_it(COLOR_A(70)) ;
+    ft801_api_cmd_append_it(BEGIN(FT_RECTS));
+    ft801_api_cmd_append_it(VERTEX2II( 5, key_y_dist - 37 , 0, 0 ));
+    ft801_api_cmd_append_it(VERTEX2II( 480-5, key_y_dist - 14 , 0, 0 ));
+    ft801_api_cmd_append_it(END());
+    
+    // PRINT THE TEXT IN INPUT AREA
+    ft801_api_cmd_append_it(COLOR_A(255)) ;
+    ft801_api_cmd_text_it(8, key_y_dist - 33, 18, 0, "ls -al * ") ;
     
     
+    
+    
+    // FINISH
     ft801_api_cmd_append_it(RESTORE_CONTEXT());
-    
 }
 
 
