@@ -449,6 +449,88 @@ void ft801_api_cmd_scrollbar_it(
 
 
 
+void ft801_api_cmd_gradcolor_it( uint32_t c )
+{
+    // append to the buffer the the command
+    ft801_api_cmd_append_it( CMD_GRADCOLOR );
+    ft801_api_cmd_append_it( c );
+}
+
+
+
+void ft801_api_cmd_progress_it( 
+    int16_t x, 
+    int16_t y, 
+    int16_t w, 
+    int16_t h, 
+    uint16_t options, 
+    uint16_t val, 
+    uint16_t range
+)
+{
+    // append to the buffer the the command
+    ft801_api_cmd_append_it( CMD_PROGRESS );
+    
+    uint32_t tmp ;
+    // wrap x, y position
+    tmp = ((uint32_t)y << 16) | (uint32_t)x ;
+    ft801_api_cmd_append_it(tmp) ;
+    
+    // wrap w, h parameters
+    tmp = ((uint32_t)h << 16) | (uint32_t)w ;
+    ft801_api_cmd_append_it( tmp ) ;
+    
+    // wrap options and val parameters
+    tmp = ((uint32_t)val << 16) | (uint32_t)options ;
+    ft801_api_cmd_append_it( tmp ) ;
+    
+    // wrap the range parameter
+    tmp = range ;
+    ft801_api_cmd_append_it( tmp ) ;
+}
+
+
+
+void ft801_api_cmd_toggle_it(
+    int16_t x, 
+    int16_t y, 
+    int16_t w, 
+    int16_t font, 
+    uint16_t options, 
+    uint16_t state, 
+    const char* str
+)
+{
+    // append into buffer right command
+    ft801_api_cmd_append_it(CMD_TOGGLE);
+    
+    uint32_t tmp ;
+    
+    // wrap x, y position
+    tmp = ((uint32_t)y << 16) | (uint32_t)x ;
+    ft801_api_cmd_append_it(tmp) ;
+    
+    // wrap width and font
+    tmp = ((uint32_t)font << 16) | (uint32_t)w ;
+    ft801_api_cmd_append_it(tmp) ;
+    
+    // wrap options and the state
+    tmp = ((uint32_t)state << 16) | (uint32_t)options ;
+    ft801_api_cmd_append_it(tmp) ;
+    
+    // append the string to the buffer
+    _cmd_append_str( str );
+}
+
+
+
+
+
+
+
+
+
+
 
 // ###### LOCAL HELP FUNCTIONS ######
 
@@ -505,3 +587,9 @@ static void _cmd_append_buff( const uint8_t * const buff, const uint32_t size )
     // update internal counter
     bytes_in_transaction += size + padd_no ;
 }
+
+
+
+
+
+

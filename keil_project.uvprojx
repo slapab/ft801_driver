@@ -586,6 +586,16 @@
               <FileType>5</FileType>
               <FilePath>.\Sources\lcd_tasks\lcd_tasks_ids.h</FilePath>
             </File>
+            <File>
+              <FileName>demo_tasks.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Sources\lcd_tasks\demo_tasks.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_tasks.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Sources\lcd_tasks\demo_tasks.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

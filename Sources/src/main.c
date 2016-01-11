@@ -30,7 +30,9 @@
 
 //#define _TEST_GPU_ENGINE
 
-#define _TEXT_BITMAP_EXAMPLE
+//#define _TERMINAL_EXAMPLE
+
+#define _DEMO_EXAMPLE
 
 
 // Declare the descryptor for ring buffer
@@ -569,7 +571,7 @@ int main(void)
 #endif
 
         
-#ifdef _TEXT_BITMAP_EXAMPLE
+#ifdef _TERMINAL_EXAMPLE
         
         // init it_api
         ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
@@ -592,12 +594,35 @@ int main(void)
         ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
         
         // let print something
-//        terminalTask_appendStr("The implementation of computer monitor text mode on VGA-compatible hardware is quite complex. Its use on PC-compatible computers was widespread in 1980s–1990s (particularly under DOS systems), but persists today for some applications even on modern desktop computers. The main features of VGA text mode are colored (arbitrary 16 color palette) characters and their background, blinking, various shapes of the cursor (block/underline/hidden static/blinking), and loadable fonts (with various glyph sizes). The Linux console traditionally uses hardware VGA-compatible text modes, and the Win32 console environment has an ability to switch the screen to text mode for some text window sizes.");
+        terminalTask_appendStr("The implementation of computer monitor text mode on VGA-compatible hardware is quite complex. Its use on PC-compatible computers was widespread in 1980s–1990s (particularly under DOS systems), but persists today for some applications even on modern desktop computers. The main features of VGA text mode are colored (arbitrary 16 color palette) characters and their background, blinking, various shapes of the cursor (block/underline/hidden static/blinking), and loadable fonts (with various glyph sizes). The Linux console traditionally uses hardware VGA-compatible text modes, and the Win32 console environment has an ability to switch the screen to text mode for some text window sizes.");
 //        terminalTask_appendStr("\nSlawomir Pabian") ;
 //        terminalTask_appendStr("elo");
 //        terminalTask_appendStr("linia");
 //        terminalTask_appendStr("testowa linia");
 //        terminalTask_appendStr("kolejna");
+        
+//        terminalTask_appendStr("bash.bash_logout");
+//        terminalTask_appendStr("bash.bashrc");
+//        terminalTask_appendStr("DIR_COLORS");
+//        terminalTask_appendStr("docx2txt.config");
+//        terminalTask_appendStr("fstab");
+//        terminalTask_appendStr("hosts");
+//        terminalTask_appendStr("inputrc");
+//        terminalTask_appendStr("install-options.txt");
+//        terminalTask_appendStr("mtab@");
+//        terminalTask_appendStr("networks");
+//        terminalTask_appendStr("nsswitch.conf");
+//        terminalTask_appendStr("package-versions.txt");
+//        terminalTask_appendStr("pkcs11/");
+//        terminalTask_appendStr("pki/");
+//        terminalTask_appendStr("profile");
+//        terminalTask_appendStr("profile.d/");
+//        terminalTask_appendStr("protocols");
+//        terminalTask_appendStr("rebase.db.i386");
+//        terminalTask_appendStr("services");
+//        terminalTask_appendStr("ssh/");
+//        terminalTask_appendStr("vimrc");
+
         
         
         while(1)
@@ -606,9 +631,58 @@ int main(void)
             ft80x_gpu_eng_it_looper() ; // pooling the gpu_engine
         }
         
-#endif // end of _TEXT_BITMAP_EXAMPLE
+#endif // end of _TERMINAL_EXAMPLE
         
-
+#ifdef _DEMO_EXAMPLE
+          
+        // init it_api
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
+        // init the gpu_engine api
+        ft80x_gpu_eng_it_init() ;
+        
+        
+        // demo menu task
+        FT80xTask_TypeDef g_demo_menu ;
+        g_demo_menu.mfp_doing = demoMenuTask_doing ;
+        g_demo_menu.mfp_painting = demoMenuTask_painting;
+        g_demo_menu.mfp_gpu_it = demoMenuTask_gpuit ;
+        g_demo_menu.mp_shared_data = NULL ;
+        g_demo_menu.m_id = TASK_DEMO_MENU_ID ;
+        
+        // demo graph task
+        FT80xTask_TypeDef g_demo_graph ;
+        g_demo_graph.mfp_doing = demoGraphTask_doing ;
+        g_demo_graph.mfp_painting = demoGraphTask_painting;
+        g_demo_graph.mfp_gpu_it = demoGraphTask_gpuit ;
+        g_demo_graph.mp_shared_data = NULL ;
+        g_demo_graph.m_id = TASK_DEMO_GRAPH_ID ;
+        
+        
+        // demo settings task
+        FT80xTask_TypeDef g_demo_sett ;
+        g_demo_sett.mfp_doing = demoSettTask_doing ;
+        g_demo_sett.mfp_painting = demoSettTask_painting;
+        g_demo_sett.mfp_gpu_it = demoSettTask_gpuit ;
+        g_demo_sett.mp_shared_data = NULL ;
+        g_demo_sett.m_id = TASK_DEMO_SETTINGS_ID;
+        
+        
+        
+        // register tasks
+        ft80x_gpu_eng_it_reg_task(&g_demo_menu) ;
+        ft80x_gpu_eng_it_reg_task(&g_demo_graph) ;
+        ft80x_gpu_eng_it_reg_task(&g_demo_sett) ;
+        // set active task
+        ft80x_gpu_eng_it_setActiveTask(TASK_DEMO_SETTINGS_ID) ;
+        
+        
+        while(1)
+        {
+            ft80x_it_check() ; // pooling the it_api
+            ft80x_gpu_eng_it_looper() ; // pooling the gpu_engine
+        }
+#endif // _DEMO_EXAMPLE
+        
 
     }        
 

@@ -348,7 +348,7 @@ static void _print_keybard_button(void)
     ft801_api_cmd_fgcolor_it(COLOR_RGB(0xF4,0x43,0x36));//#F44336
     ft801_api_cmd_button_it(360, 240, 50, 28, 18, FT_OPT_FLAT, "X");
     // print the time e.g
-    ft801_api_cmd_text_it(440, 248, 18, 0, "18:21");
+    ft801_api_cmd_text_it(440, 248, 18, 0, "18:37");
     
     // print show keyboard button
     ft801_api_cmd_append_it(COLOR_RGB(0xFF,0xFF,0xFF)) ;
@@ -375,8 +375,16 @@ static void _print_keybard(void)
     
     //"1234567890-="
     const char c_1r[] = "qwertyuiop" ;
-    const char c_2r[] = "asdfghjkl;" ;
+    const char c_1rsh[] = "QWERTYUIOP";
+    const char c_1rn[] = "1234567890" ;
+        
+    const char c_2r[] = "asdfghjkl;" ;  
+    const char c_2rsh[] = "ASDFGHJKL";
+    const char c_2rn[] = "!@#$%^&*()" ; 
+    
     const char c_3r[] = "zxcvbnm,./" ;
+    const char c_3rsh[] = "ZXCVBNM<>?" ;
+    const char c_3rn[] = "-=_+{}|\\:\"" ; 
     
     
     const uint8_t key_w = 24 ;
@@ -389,6 +397,13 @@ static void _print_keybard(void)
     const char * pc_1r = c_1r ;
     const char * pc_2r = c_2r ;
     const char * pc_3r = c_3r ;
+//    const char * pc_1r = c_1rsh ;
+//    const char * pc_2r = c_2rsh ;
+//    const char * pc_3r = c_3rsh ;
+    
+//    const char * pc_1r = c_1rn ;
+//    const char * pc_2r = c_2rn ;
+//    const char * pc_3r = c_3rn ;
     
     ft801_api_cmd_append_it(SAVE_CONTEXT());
     
@@ -409,7 +424,7 @@ static void _print_keybard(void)
     // ?123 key
     ft801_api_cmd_button_it( key_x_dist + (2*_thisData.ms_disp_conf.m_font_w) + (9*key_w),
             key_y_dist+(3*key_dist),
-            _thisData.ms_disp_conf.m_font_w + (2*key_w), key_h, 18,0, "?123") ;
+            _thisData.ms_disp_conf.m_font_w + (2*key_w), key_h, 18,0, "!123") ;
     
     // the OK/APPLY button
     ft801_api_cmd_append_it(SAVE_CONTEXT()) ;
@@ -428,7 +443,7 @@ static void _print_keybard(void)
     
     // PRINT THE TEXT IN INPUT AREA
     ft801_api_cmd_append_it(COLOR_A(255)) ;
-    ft801_api_cmd_text_it(8, key_y_dist - 33, 18, 0, "ls -al * ") ;
+    ft801_api_cmd_text_it(8, key_y_dist - 33, 18, 0, "") ;
     
     
     

@@ -6,6 +6,9 @@
 
 #include "lcd_tasks_ids.h"
 #include "terminal_task.h"
+#include "demo_tasks.h"
+
+
 
 #define TASK_ID1 1
 bool task1_painting(void * const data);
