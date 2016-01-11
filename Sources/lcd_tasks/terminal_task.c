@@ -13,6 +13,8 @@
 #define TEXT_TAG 151
 #define TEXT_UP_TAG 152
 #define TEXT_DW_TAG 153
+#define KEYBOARD_TAG 164
+
 
 struct _ringbuffer_t
 {
@@ -71,12 +73,14 @@ struct _container_t
 static const uint16_t _rbuffer_size = 2048 ; // NOTE this value should be power of 2!
 static uint8_t _string_buffer[_rbuffer_size] ;
 
+static const uint16_t _area_width = 476 ;
+static const uint16_t _area_height = 230 ;
 static struct _container_t _thisData =
     {
         // AREA USED FOR DISPLAYING STRINGS
         {
-            476, // width of area
-            230, // height of area
+            _area_width, // width of area
+            _area_height, // height of area
             8,   // width of used font ( ft801: 18/19 )
             16   // height of used font ( ft801: 18/19 )
         },
@@ -107,15 +111,18 @@ static struct _container_t _thisData =
 // forward declaration of local functions: 
 static void _move_to_next_line(void) ;
 static void _move_to_prev_line(void) ;
+static void _recalculate_area(void);
+static void _point_to_latest_screen(void) ;
 static void _print_text(void);
 static bool _is_rb_full(void) ;
 static bool _is_rb_empty(void) ;
 static void _print_scrollbar(void);
 static void _print_text_dw_up(void);
+static void _print_keybard_button(void);
+static void _print_keybard(void);
 
 
-
-    
+static bool show_keyboard = false ;
     
 
 bool terminalTask_painting (void * const data)
@@ -155,10 +162,14 @@ bool terminalTask_painting (void * const data)
     _print_text_dw_up() ;
 
     
-    //_print_scrollbar() ;
+    // print the keyboard button
+    _print_keybard_button() ;
+    
+    // print keyboard
+    _print_keybard() ;
     
     
-
+    ft801_api_cmd_append_it(TAG(1));
     
     
     
@@ -180,36 +191,13 @@ bool terminalTask_doing(void * const data)
     {
         myData[0] =  0 ; 
         
-        uint32_t range = ft801_spi_rd32(REG_TRACKER);
-        uint8_t tag = range & (0xFF);//ft801_spi_rd8(REG_TOUCH_TAG);
-        range >>= 16; //get the range value
+        //uint32_t range = ft801_spi_rd32(REG_TRACKER);
+        //uint8_t tag = range & (0xFF);//ft801_spi_rd8(REG_TOUCH_TAG);
+        uint8_t tag = ft801_spi_rd8(REG_TOUCH_TAG);
+        //range >>= 16; //get the range value
         
         if ( tag == TEXT_UP_TAG )
         {
-//            static uint32_t prev = 0 ;
-//            static uint8_t avg = 0;
-//            ++avg ;
-//            if ( avg == 10 )
-//            {   
-//                avg = 0 ;
-//                uint32_t line = (range*_thisData.m_total_lines_no)/65536;
-//                
-//                if ((int32_t)(prev - range) > 0)
-//                {
-//                    _move_to_prev_line() ;
-//                }
-//                else if ((int32_t)(prev - range) < 0)
-//                {
-//                    _move_to_next_line() ;
-//                }
-//                prev = range ;
-//                ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
-//            }
-//            if ( range < 32000 )
-//                _move_to_prev_line() ;
-//            else
-//                _move_to_next_line() ;
-            
             _move_to_prev_line() ;
             // refresh task
             ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
@@ -220,8 +208,29 @@ bool terminalTask_doing(void * const data)
             // refresh task
             ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
         }
+        else if ( tag == KEYBOARD_TAG )
+        {
+            
+            if ( true == show_keyboard )
+            {
+                show_keyboard = false ;
+                _thisData.ms_disp_conf.m_area_h = _area_height ;
+                _thisData.ms_disp_conf.m_area_w = _area_width ;
+            }
+            else
+            {
+                show_keyboard = true ;
+                _thisData.ms_disp_conf.m_area_h = 100 ;
+                _thisData.ms_disp_conf.m_area_w = _area_width ;
+                
+            }
+            _recalculate_area() ;
+            _point_to_latest_screen();
+            // refresh screen
+            ft80x_gpu_eng_it_setActiveTask(TASK_ETERMINAL_ID) ;
+        }
         
-    } ;
+    }
     
     return true;
 }
@@ -301,15 +310,17 @@ static void _print_text_dw_up(void)
     {
         return ;
     }
+    
     ft801_api_cmd_append_it(SAVE_CONTEXT());
     ft801_api_cmd_append_it(COLOR_A(30));
     ft801_api_cmd_append_it(BEGIN(FT_RECTS)) ;
     ft801_api_cmd_append_it(COLOR_RGB(255,255,255)) ;
+    
     if ( _thisData.m_curr_line_no > 1 )
     {
         ft801_api_cmd_append_it(TAG(TEXT_UP_TAG)) ;
         ft801_api_cmd_append_it(VERTEX2II(0,0,0, 0)) ; // up 
-        ft801_api_cmd_append_it(VERTEX2II(_thisData.ms_disp_conf.m_area_w, 
+        ft801_api_cmd_append_it(VERTEX2II(_thisData.ms_disp_conf.m_area_w-5, 
             20,0,0)) ; // up 
     }
     
@@ -318,11 +329,70 @@ static void _print_text_dw_up(void)
         ft801_api_cmd_append_it(TAG(TEXT_DW_TAG)) ;
         ft801_api_cmd_append_it(VERTEX2II(0,
             _thisData.ms_disp_conf.m_area_h-20,0, 0)) ; // dw 
-        ft801_api_cmd_append_it(VERTEX2II(_thisData.ms_disp_conf.m_area_w, 
+        ft801_api_cmd_append_it(VERTEX2II(_thisData.ms_disp_conf.m_area_w-5, 
             _thisData.ms_disp_conf.m_area_h,0,0)) ; // dw
     }
+    ft801_api_cmd_append_it(TAG(1)) ;
     ft801_api_cmd_append_it(END()) ;
     ft801_api_cmd_append_it(RESTORE_CONTEXT());
+}
+
+
+
+static void _print_keybard_button(void)
+{
+    ft801_api_cmd_append_it(SAVE_CONTEXT());
+    ft801_api_cmd_append_it(COLOR_RGB(0xFF,0xFF,0xFF)) ;
+    ft801_api_cmd_fgcolor_it(COLOR_RGB(0x21,0x96,0xF3));
+    if ( false == show_keyboard) 
+    {
+        ft801_api_cmd_append_it(TAG(KEYBOARD_TAG));
+        ft801_api_cmd_button_it(5, 250, 30, 20, 18, 0, "^") ;
+    }
+    else
+    {
+        ft801_api_cmd_append_it(TAG(KEYBOARD_TAG));
+        ft801_api_cmd_button_it(5, 250, 30, 20, 18, 0, "v") ;
+    }
+    ft801_api_cmd_append_it(TAG(1));
+    ft801_api_cmd_append_it(RESTORE_CONTEXT());
+}
+
+
+static void _print_keybard(void)
+{
+    if ( false == show_keyboard )
+        return ;
+    
+    //"1234567890-="
+    const char c_1r[] = "qwertyuiop" ;
+    const char c_2r[] = "asdfghjkl;" ;
+    const char c_3r[] = "zxcvbnm,./" ;
+    
+    
+    const uint8_t key_x_dist = 5 ;
+    const uint8_t key_y_dist = 120 ;
+    const uint8_t key_w = 24 ;
+    const uint8_t key_h = 28 ;
+    const uint8_t key_dist = key_h + 2 ;
+    
+    const char * pc_1r = c_1r ;
+    const char * pc_2r = c_2r ;
+    const char * pc_3r = c_3r ;
+    
+    ft801_api_cmd_append_it(SAVE_CONTEXT());
+    ft801_api_cmd_append_it(COLOR_RGB(0x00,0x00,0x00)) ;
+    ft801_api_cmd_fgcolor_it(COLOR_RGB(0x9E,0x9E,0x9E));//#9E9E9E
+    
+    ft801_api_cmd_keys_it( key_x_dist, key_y_dist, 12*key_w, key_h, 18, 0, pc_1r) ;
+    ft801_api_cmd_keys_it( key_x_dist, key_y_dist+key_dist, 12*key_w, key_h, 18, 0, pc_2r) ;
+    ft801_api_cmd_keys_it( key_x_dist, key_y_dist+2*key_dist, 12*key_w, key_h, 18, 0, pc_3r) ;
+    //ft801_api_cmd_keys_it( key_x_dist, key_y_dist+3*key_dist, 12*key_w, key_h, 18, 0, pc_3r) ;
+    ft801_api_cmd_button_it( key_x_dist + 4*key_w, key_y_dist+3*key_dist, 4*key_w, key_h, 18,0, "") ;
+    
+    
+    ft801_api_cmd_append_it(RESTORE_CONTEXT());
+    
 }
 
 
@@ -372,9 +442,7 @@ void terminalTask_appendStr( const char * str )
 
 
     // compute the needed params to handle text right edge on the screen
-    _thisData.m_lines = _thisData.ms_disp_conf.m_area_h / _thisData.ms_disp_conf.m_font_h ;
-    _thisData.m_chars = _thisData.ms_disp_conf.m_area_w / _thisData.ms_disp_conf.m_font_w ;
-
+    _recalculate_area();
 
     // copy string to the internal ring buffer
     for ( size_t c = 0, char_no = 1 ; str[c] != '\0' ; ++c, ++char_no )
@@ -474,20 +542,21 @@ void terminalTask_appendStr( const char * str )
     else
     // SET THE START LINE AT m_lines from the end of buffer
     {
-        uint32_t pos = ( _thisData.ms_rbuff.m_head - 2 ) & (size -1); // -2 to skip \0 of the first line
-        for ( int32_t i = _thisData.m_lines ;
-                0 < i ; --i)
-        {
-            while ( pbuff[pos] != '\0')
-            {
-                pos = (pos -1 ) & ( size - 1);
-            }
-            pos = (pos -1 ) & ( size - 1);
+//        uint32_t pos = ( _thisData.ms_rbuff.m_head - 2 ) & (size -1); // -2 to skip \0 of the first line
+//        for ( int32_t i = _thisData.m_lines ;
+//                0 < i ; --i)
+//        {
+//            while ( pbuff[pos] != '\0')
+//            {
+//                pos = (pos -1 ) & ( size - 1);
+//            }
+//            pos = (pos -1 ) & ( size - 1);
 
-        }
+//        }
 
-        _thisData.m_start_line = (pos +2 ) & ( size - 1) ;
-        _thisData.m_curr_line_no = _thisData.m_total_lines_no - _thisData.m_lines +1 ;
+//        _thisData.m_start_line = (pos +2 ) & ( size - 1) ;
+//        _thisData.m_curr_line_no = _thisData.m_total_lines_no - _thisData.m_lines +1 ;
+        _point_to_latest_screen();
     }
 }
 
@@ -501,6 +570,29 @@ void terminalTask_appendStr( const char * str )
 
 
 // LOCAL HELPER FUNCTIONS
+
+
+static void _point_to_latest_screen(void)
+{
+    const size_t size = _thisData.ms_rbuff.m_size;
+    uint8_t * const pbuff = _thisData.ms_rbuff.m_buff ;
+         
+    uint32_t pos = ( _thisData.ms_rbuff.m_head - 2 ) & (size -1); // -2 to skip \0 of the first line
+    for ( int32_t i = _thisData.m_lines ;
+            0 < i ; --i)
+    {
+        while ( pbuff[pos] != '\0')
+        {
+            pos = (pos -1 ) & ( size - 1);
+        }
+        pos = (pos -1 ) & ( size - 1);
+
+    }
+    _thisData.m_start_line = (pos +2 ) & ( size - 1) ;
+    _thisData.m_curr_line_no = _thisData.m_total_lines_no - _thisData.m_lines +1 ;
+}
+
+
 
 static void _move_to_prev_line(void)
 {
@@ -592,6 +684,12 @@ static void _move_to_next_line(void)
 }
 
 
+inline static void _recalculate_area(void)
+{
+    // compute the needed params to handle text right edge on the screen
+    _thisData.m_lines = _thisData.ms_disp_conf.m_area_h / _thisData.ms_disp_conf.m_font_h ;
+    _thisData.m_chars = _thisData.ms_disp_conf.m_area_w / _thisData.ms_disp_conf.m_font_w ;
+}
 
 inline static bool _is_rb_full(void)
 {
