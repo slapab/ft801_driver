@@ -257,6 +257,12 @@ bool terminalTask_gpuit(const uint8_t itflags, void * const data)
 
 
 
+
+
+
+
+// This function will print the lines, it will handle the 
+// correct lines to display
 void _print_text(void)
 {
     // handle the text display:
@@ -305,6 +311,10 @@ void _print_text(void)
 }
 
 
+
+
+
+
 static void _print_text_dw_up(void)
 {
     if ( _thisData.m_total_lines_no <= _thisData.m_lines )
@@ -340,6 +350,8 @@ static void _print_text_dw_up(void)
 
 
 
+
+
 static void _print_keybard_button(void)
 {
     ft801_api_cmd_append_it(SAVE_CONTEXT());
@@ -368,6 +380,8 @@ static void _print_keybard_button(void)
 }
 
 
+
+// this local function prints the keyboard
 static void _print_keybard(void)
 {
     if ( false == show_keyboard )
@@ -453,41 +467,12 @@ static void _print_keybard(void)
 }
 
 
-//static void _print_scrollbar(void)
-//{
-//    ft801_api_cmd_append_it( TAG(SCROLL_TAG) );
-//    ft801_api_cmd_fgcolor_it( COLOR_RGB(200,200,200) );
-//    
-//    uint16_t val, range, sc_size ;
-//    if ( _thisData.m_total_lines_no <= _thisData.m_lines )
-//    {
-//        val = 0;
-//        range = 1 ;
-//        sc_size = 1;
-//    }
-//    else
-//    {
-//        sc_size = 0;
-//        uint16_t half = _thisData.m_total_lines_no >> 1 ;//diwide by 2
-//        if ( _thisData.m_curr_line_no < half )
-//            val = (_thisData.m_curr_line_no /*+ _thisData.m_lines*/ -1) ;
-//        else
-//            val = (_thisData.m_curr_line_no + _thisData.m_lines -1) ;
-//        range = _thisData.m_total_lines_no;
-//        
-//    }
-//        
-//    
-//    ft801_api_cmd_scrollbar_it(460, 20, 10, 232, FT_OPT_FLAT,
-//        val,
-//        sc_size, // size of scroll button ( probably in % )
-//        range);
-//    ft801_api_cmd_track_it(460, 20, 10, 232, SCROLL_TAG);
-//    ft801_api_cmd_append_it( TAG(0) );
-//}
 
 
-
+/**
+*   This function copies the given string into local buffer.
+*   @param str pointer to the buffer with string to be copied
+*/
 void terminalTask_appendStr( const char * str )
 {
     uint8_t * const pbuff  =  _thisData.ms_rbuff.m_buff ;
@@ -599,20 +584,6 @@ void terminalTask_appendStr( const char * str )
     else
     // SET THE START LINE AT m_lines from the end of buffer
     {
-//        uint32_t pos = ( _thisData.ms_rbuff.m_head - 2 ) & (size -1); // -2 to skip \0 of the first line
-//        for ( int32_t i = _thisData.m_lines ;
-//                0 < i ; --i)
-//        {
-//            while ( pbuff[pos] != '\0')
-//            {
-//                pos = (pos -1 ) & ( size - 1);
-//            }
-//            pos = (pos -1 ) & ( size - 1);
-
-//        }
-
-//        _thisData.m_start_line = (pos +2 ) & ( size - 1) ;
-//        _thisData.m_curr_line_no = _thisData.m_total_lines_no - _thisData.m_lines +1 ;
         _point_to_latest_screen();
     }
 }
@@ -626,9 +597,12 @@ void terminalTask_appendStr( const char * str )
 
 
 
+// ########################################
 // LOCAL HELPER FUNCTIONS
+// ########################################
 
-
+// this function points to the last - x lines ( when x is calculated 
+// acordingly of height of used area)
 static void _point_to_latest_screen(void)
 {
     const size_t size = _thisData.ms_rbuff.m_size;
@@ -648,6 +622,8 @@ static void _point_to_latest_screen(void)
     _thisData.m_start_line = (pos +2 ) & ( size - 1) ;
     _thisData.m_curr_line_no = _thisData.m_total_lines_no - _thisData.m_lines +1 ;
 }
+
+
 
 
 
@@ -741,12 +717,18 @@ static void _move_to_next_line(void)
 }
 
 
+
+
+
 inline static void _recalculate_area(void)
 {
     // compute the needed params to handle text right edge on the screen
     _thisData.m_lines = _thisData.ms_disp_conf.m_area_h / _thisData.ms_disp_conf.m_font_h ;
     _thisData.m_chars = _thisData.ms_disp_conf.m_area_w / _thisData.ms_disp_conf.m_font_w ;
 }
+
+
+
 
 inline static bool _is_rb_full(void)
 {
@@ -756,6 +738,9 @@ inline static bool _is_rb_full(void)
     else
         return false ;
 }
+
+
+
 
 inline static bool _is_rb_empty(void)
 {

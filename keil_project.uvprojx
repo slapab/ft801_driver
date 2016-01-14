@@ -427,11 +427,6 @@
               <FilePath>.\Sources\src\spi.c</FilePath>
             </File>
             <File>
-              <FileName>spi_with_interrutps.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Sources\src\spi_with_interrutps.c</FilePath>
-            </File>
-            <File>
               <FileName>gpio_exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Sources\src\gpio_exti.c</FilePath>
@@ -450,11 +445,6 @@
               <FileName>spi.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Sources\inc\spi.h</FilePath>
-            </File>
-            <File>
-              <FileName>spi_with_interrupts.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Sources\inc\spi_with_interrupts.h</FilePath>
             </File>
             <File>
               <FileName>gpio_exti.h</FileName>

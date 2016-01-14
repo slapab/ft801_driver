@@ -9,7 +9,7 @@
 
 #include "my_tasks.h"
 
-#include "spi.h" // remove this dependecy - must deal with it
+#include "spi.h" // remove this dependecy
 
 #include "ft801_gpu.h"
 
@@ -510,10 +510,8 @@ bool graphExample_painting( void * const data )
     uint16_t y_dist = 50 * 16 ; // distance from the top
     uint16_t y_width = 212 * 16 ; // width (y) of the rectangle
     
-    ft801_api_cmd_append_it( TAG(201) ) ;
-    ft801_api_cmd_append_it( SAVE_CONTEXT() ) ;
     ft801_api_cmd_append_it( COLOR_RGB(0, 0, 0) );
-    
+    ft801_api_cmd_append_it( TAG(201) ) ;
     ft801_api_cmd_append_it( BEGIN(FT_RECTS) ) ;
     ft801_api_cmd_append_it( LINE_WIDTH(2*16)) ;
     ft801_api_cmd_append_it( VERTEX2F( x_dist, y_dist ) );
@@ -568,9 +566,7 @@ bool graphExample_painting( void * const data )
         ft801_api_cmd_append_it( END() );
     }
     
-    
-    
-    ft801_api_cmd_append_it( RESTORE_CONTEXT() ) ;
+
     
     
     ft801_api_cmd_append_it(DISPLAY()) ;
@@ -658,7 +654,7 @@ bool graphExample_gpuit( const uint8_t itflags, void * const data )
     
     uint16_t * myData = data ;
     
-    uint8_t mask = FT_INT_CONVCOMPLETE |  FT_INT_TAG | FT_INT_TOUCH ;
+    uint8_t mask = FT_INT_CONVCOMPLETE |  FT_INT_TAG /*| FT_INT_TOUCH */ ;
     if ( itflags & mask )
     {
         myData[0] = 1 ;

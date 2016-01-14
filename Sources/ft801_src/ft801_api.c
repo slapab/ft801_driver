@@ -2,6 +2,11 @@
 #include "spi.h"
 #include "ft801_gpu.h"
 
+// forward declarations:
+void ft801_api_ctouch_adjust( void );
+void ft801_api_enable_lcd( bool enable );
+
+
 void ft801_api_init_lcd( void )
 {
     /* define lcd params */
@@ -18,6 +23,22 @@ void ft801_api_init_lcd( void )
     const uint16_t FT_DispPCLK = 5;
     const uint16_t FT_DispSwizzle = 0;
     const uint16_t FT_DispPCLKPol = 1;
+    
+    
+    
+    // init sequence to start the GPU FT801
+    // this configures the clock and sets to the active state
+    ft801_spi_host_cmd( FT_CLKEXT ) ;
+    ft801_spi_host_cmd( FT_CLK48M ) ;
+    ft801_spi_host_cmd( FT_ACTIVE ) ;
+    ft801_spi_host_cmd( FT_CORERST ) ;
+    
+    // some dleay 
+    {
+        volatile uint32_t tmp = 1000;
+        for ( uint32_t i = 0 ; i < tmp ; ++i );
+    }
+    
     
     // Push this params to the FT core
 
@@ -38,6 +59,16 @@ void ft801_api_init_lcd( void )
         
     ft801_spi_mem_wr8( REG_PCLK, FT_DispPCLK) ; // enable pll - whole gpu
 
+
+
+
+
+    // send the transform matrix to ctouch registers
+    // this will calibrate the the touch screen
+    ft801_api_ctouch_adjust();
+    
+    // Turn on the LCD panel
+    ft801_api_enable_lcd(true);
 }
 
 

@@ -1,7 +1,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "FT801_gpu.h"
 #include "ft801_api_dl.h"
+
 
 #include "spi.h" // todo -> remove this dependecy
 
@@ -69,6 +71,10 @@ uint32_t ft801_api_dl_flush( void )
     
     ft801_spi_mem_wrStream( _dl_descr.m_startAddr, _dl_descr.m_pBuff, maxSize ) ;
    
+    // swap list -> this operation does change the screen
+    ft801_spi_mem_wr8(REG_DLSWAP, FT_DLSWAP_FRAME);
+    
+    
     return 0;
 }
 

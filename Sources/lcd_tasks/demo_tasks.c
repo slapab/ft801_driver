@@ -370,7 +370,7 @@ bool demoSettTask_painting (void * const data)
     
     ft801_api_cmd_text_it(435,226,28, 1536, "Wroc");
     
-    RESTORE_CONTEXT();
+    ft801_api_cmd_append_it(RESTORE_CONTEXT());
     
     ft801_api_cmd_append_it(SAVE_CONTEXT());
     ft801_api_cmd_append_it(LINE_WIDTH(160));

@@ -2,8 +2,6 @@
 #include "stm32f4xx.h"
 #include "spi.h"
 
-#include "spi_with_interrupts.h"
-
 #include <signal.h>
 
 
@@ -17,33 +15,34 @@
 
 #include "my_tasks.h"
 
-//#include "ringBuffer_api.h"
-
 #include <assert.h>
 
+//example of using DisplayList and MACRO command
 //#define _EXAMPLE_DL_TWO_BALLS
+
+// simple example how to use blocking api to send commands (co-processor)
 //#define _EXAMPLE_CMD
-//#define _EXAMPLE_TAG_TRACK
+
+// Run toch pannel calibration - can not be set the extended mode!!!
 //#define _CALIBRATE_TOUCH
 
-#define _TEST_GPU_ENGINE
-
-//#define _TERMINAL_EXAMPLE
-
-//#define _DEMO_EXAMPLE
+// sliders and blue keyboard
+//#define _TEST_GPU_ENGINE
 
 
-// Declare the descryptor for ring buffer
-rbd_t rb_spi_rd_descr ;
-rbd_t rb_spi_wr_descr ;
-// declare the memory for ring buffer
-volatile uint8_t pSPI_buff_rd[16]; // read ring buffer
-volatile uint8_t pSPI_buff_wr[16]; // write ring buffer
+#define _TERMINAL_EXAMPLE
 
-volatile size_t cnt = 0 ;
+//#define _DEMO_EXAMPLE // only static screns are displayed
+
+
+
+
 
 volatile sig_atomic_t gpu_int ;
 
+
+
+// Function required by API
 void enable_spi( bool enable )
 {
     if ( true == enable )
@@ -52,6 +51,8 @@ void enable_spi( bool enable )
         SPI4->CR1 &= ~(SPI_CR1_SPE);
 }
 
+
+// Function required by API
 void enable_spi_interrupt( bool enable )
 {
     NVIC_ClearPendingIRQ(SPI4_IRQn);
@@ -60,6 +61,8 @@ void enable_spi_interrupt( bool enable )
     else
         NVIC_DisableIRQ(SPI4_IRQn) ;
 }
+
+
 
 
 void SPI4_IRQHandler(void)
@@ -112,39 +115,16 @@ void EXTI4_IRQHandler(void)
 void sleep( uint32_t delay )
 {
     volatile int i = 0;
-    for ( uint32_t i = 0 ; i < 1600000; ++i ) {}
+    for ( uint32_t i = 0 ; i < 160000; ++i ) {}
 }
+
+
 
 
 int main(void)
 {
        
-    
-    // declare the ring buffer structure and init it
-    rb_attr_t ringBuffer_prepare =
-                {
-                    sizeof( pSPI_buff_rd[0]),
-                    sizeof( pSPI_buff_rd ) / sizeof( pSPI_buff_rd[0]),
-                    (void*)&pSPI_buff_rd[0]
-                } ;
-                
-    // add defined ring buffer to the system and get the descriptor
-    if ( !ring_buffer_init(&rb_spi_rd_descr, &ringBuffer_prepare) )
-    {
-        assert(!"Can not init ring buffer") ;
-    }
-    
-    // Prepare second buffer
-    ringBuffer_prepare.s_elem = sizeof( pSPI_buff_wr[0] );
-    ringBuffer_prepare.n_elem = sizeof( pSPI_buff_wr ) / sizeof ( pSPI_buff_wr[0] );
-    ringBuffer_prepare.buffer = (void*)&pSPI_buff_wr[0] ;
-    
-    // add defined ring buffer to the system and get the descriptor
-    if ( !ring_buffer_init(&rb_spi_wr_descr, &ringBuffer_prepare) )
-    {
-        assert(!"Can not init ring buffer") ;
-    }
-    
+       
     // Configure the NVIC and IRQs
     NVIC_ClearPendingIRQ(EXTI4_IRQn);
     NVIC_EnableIRQ(EXTI4_IRQn) ;
@@ -153,47 +133,28 @@ int main(void)
     // Configure the exti for gpu interrupt pin
     ft801_gpu_exti_conf() ;
     
-    // init the SPI
+    // init the SPI hardware interface in stm32f429 microcontroller
     gpu_init_spi() ;
+     
+    
+    // this will configre clock and set FT801 to the active state
+    // It also sends the precalcualted data to teach the controller
+    // how to use the plugged in LCD display [Datasheet]
+    ft801_api_init_lcd() ;
     
     
-    //NVIC_EnableIRQ(SPI4_IRQn) ;
-
-    
-    
-    
-//    NVIC_ClearPendingIRQ(SPI4_IRQn) ;
-    
-//    cnt = 0 ;
-    
-    // init sequence
-    ft801_spi_host_cmd( FT_CLKEXT ) ;
-    ft801_spi_host_cmd( FT_CLK48M ) ;
-    ft801_spi_host_cmd( FT_ACTIVE ) ;
-    
-    ft801_spi_host_cmd( FT_CORERST ) ;
-    
-    sleep(2) ;
-    
-    
+    // Try to read ID of this controller.
+    // This will verify if the communitation works and 
+    // controller is in the active state. The retrun value
+    // for the FT801 controller must bye 0x7C (datasheet)
     uint8_t ret = 0 ;
     ret = ft801_spi_rd8( REG_ID );
     
     
-    
     if ( ret == 0x7C )
     {   
-        // send the transform matrix to ctouch registers
-        ft801_api_ctouch_adjust();
-        
-        ft801_api_init_lcd() ;
-        
-        if ( false == ft801_api_is_enabled() )
-        {
-            ft801_api_enable_lcd(true);
-        }
-        
-        // enable external interrupts
+        // enable interrupts, the FT801 will generate the low level if 
+        // any of set sources will be 1
         ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG | FT_INT_CONVCOMPLETE | FT_INT_TOUCH);
         ft801_api_enable_it_pin(true);
         // clear any pending flags
@@ -201,8 +162,7 @@ int main(void)
         
         // set the backlight pwm duty 0-128
         ft801_spi_mem_wr8(REG_PWM_DUTY, 25) ;
-        // enable the extended mode for touch-screen
-        ft801_spi_mem_wr8(REG_CTOUCH_EXTENDED, 0) ;
+       
         
         
         
@@ -221,8 +181,6 @@ int main(void)
         uint32_t dl_buffer[20] ;
         
         // create dl
-        
-        {
         ft801_api_dl_prepare(FT_RAM_DL, &dl_buffer[0], sizeof(dl_buffer)/sizeof(dl_buffer[0]) );
         ft801_api_dl_append(CLEAR(1, 1, 1)) ;
         ft801_api_dl_append(POINT_SIZE(psize));
@@ -237,9 +195,6 @@ int main(void)
         ft801_api_dl_flush();
             
 
-    
-        } 
-        ft801_spi_mem_wr8(REG_DLSWAP, FT_DLSWAP_FRAME); // swap list
         
         int32_t mov1 = 2 ;
         int32_t movy1 = 2 ;
@@ -287,33 +242,13 @@ int main(void)
         uint8_t cmd_buffer[3+(4*60)] ; // buffer for 30 commands ( 3 for address)
         
         ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
-//        ft801_api_cmd_append(CMD_DLSTART) ;
-//        ft801_api_cmd_append(CLEAR_COLOR_RGB(0, 230, 255));
-//        ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
-//        ft801_api_cmd_append(POINT_SIZE(320));
-//        ft801_api_cmd_append(BEGIN(FT_POINTS)) ;
-//        ft801_api_cmd_append(COLOR_RGB(160, 22, 22));
-//        ft801_api_cmd_append(VERTEX2II(32, 32, 0, 0)); // vertix
-//        ft801_api_cmd_append(END()) ;
-//        ft801_api_cmd_append(DISPLAY()) ;
-//        ft801_api_cmd_append(CMD_SWAP);
 
-          // spinner example
-//        ft801_api_cmd_append(CMD_DLSTART) ;
-//        ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
-//        ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
-//        ft801_api_cmd_spinner(240,150, 1,0);
-        
-        // calibrate the touchscreen driver
-        //ft801_api_cmd_append(CMD_CALIBRATE);
-        //ft801_api_cmd_append(CMD_SWAP);
-        
         // example with text
         ft801_api_cmd_append(CMD_DLSTART) ;
         ft801_api_cmd_append(CLEAR_COLOR_RGB(50, 50, 55));
         ft801_api_cmd_append(CLEAR(1, 1, 1)) ;
         ft801_api_cmd_append(COLOR_RGB(0,100,250));
-        ft801_api_cmd_text(240,136,30,FT_OPT_CENTER,"Slawomir Pabian") ;
+        ft801_api_cmd_text(240,136,30,FT_OPT_CENTER,"Some text.") ;
         ft801_api_cmd_fgcolor(COLOR_RGB(0,150,10) );
         ft801_api_cmd_append(COLOR_RGB(255,255,255));
         ft801_api_cmd_keys(240,156,100,30,26,FT_OPT_FLAT,"12345");
@@ -321,15 +256,15 @@ int main(void)
         ft801_api_cmd_append(DISPLAY()) ;
         ft801_api_cmd_append(CMD_SWAP);
         ft801_api_cmd_flush();
-       
-//        sleep(1);
-//        ft801_spi_mem_wr8(REG_DLSWAP, FT_DLSWAP_FRAME); // swap list 
+
         
 #endif
 
         
 #ifdef _CALIBRATE_TOUCH
-         uint8_t cmd_buffer[3+(4*40)] ; // buffer for 30 commands ( 3 for address)
+        
+        gpu_int = 0 ;
+        uint8_t cmd_buffer[3+(4*40)] ; // buffer for 30 commands ( 3 for address)
         
         ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer, sizeof(cmd_buffer)/sizeof(cmd_buffer[0]));
         ft801_api_cmd_append(CMD_DLSTART) ;
@@ -372,74 +307,18 @@ int main(void)
             }
         }
 #endif 
-        
-        
-        
-        
-#ifdef _EXAMPLE_TAG_TRACK
-        uint8_t cmd_buffer2[3+(4*60)] ; // buffer for 30 commands ( 3 for address)
-        
-        ft801_api_cmd_prepare(FT_RAM_CMD, cmd_buffer2, sizeof(cmd_buffer2)/sizeof(cmd_buffer2[0]));
-        
-        ft801_api_cmd_append(CMD_DLSTART) ;
-        
-        ft801_api_cmd_append( CLEAR_COLOR_RGB(5, 45, 110) );
-        ft801_api_cmd_append( COLOR_RGB(255, 168, 64) );
-        ft801_api_cmd_append( CLEAR(1 ,1 ,1) );
-        ft801_api_cmd_append( TAG(1) );
-        ft801_api_cmd_append( BEGIN(FT_POINTS) );
-        ft801_api_cmd_append( POINT_SIZE(20 * 16) );
-        ft801_api_cmd_append( VERTEX2F(80 * 16, 60 * 16) );
-        //ft801_api_cmd_track(80 * 16, 60 * 16, 1, 1, 1);
-        ft801_api_cmd_append( TAG(20) ) ;
-        ft801_api_cmd_append( VERTEX2F(280 * 16, 60 * 16) );
-        //ft801_api_cmd_track(280 * 16, 60 * 16, 1, 1, 1);
-        ft801_api_cmd_append(END()) ;
-       
-        
-        ft801_api_cmd_append(DISPLAY()) ;
-        ft801_api_cmd_append(CMD_SWAP);
-        ft801_api_cmd_flush();
-        
-        // enable TAG update interrupt
-        ft801_api_enable_it_src(FT_INT_CMDEMPTY | FT_INT_TAG | FT_INT_CONVCOMPLETE);
-        while(1){
-            if ( gpu_int == 1 )
-            {
-                
-                gpu_int = 0 ;
-                
-                // read flags
-                uint8_t fl = ft801_api_read_it_flags() ;
-                if ( fl & FT_INT_TAG )
-                {
-                    int t ;
-                    if ( (t = ft801_spi_rd8( REG_TOUCH_TAG )) == 1 ) {
-                        volatile int b = 0 ;
-                        b = t;
-                    }
-                    else {
-                        volatile int c = 1 ;
-                        c = t;
-                    }
-                }
-                else if ( fl & FT_INT_CONVCOMPLETE )
-                {
-                    volatile int d = 23;
-                    d++ ;
-                    int a = d ;
-                    d-- ;
-                }
-            
-            }
-        }
-        
-#endif
 
-        
+
+
+
         
 #ifdef _TEST_GPU_ENGINE
 
+        // enable the extended mode for touch-screen
+        ft801_spi_mem_wr8(REG_CTOUCH_EXTENDED, 0) ;
+        // some delay 
+        sleep(1) ;
+        
         // init it_api
         ft80x_it_api_init( enable_spi, enable_spi_interrupt, ft801_spi_rd16 );
 
@@ -524,11 +403,6 @@ int main(void)
         
         // let print something
         terminalTask_appendStr("The implementation of computer monitor text mode on VGA-compatible hardware is quite complex. Its use on PC-compatible computers was widespread in 1980s–1990s (particularly under DOS systems), but persists today for some applications even on modern desktop computers. The main features of VGA text mode are colored (arbitrary 16 color palette) characters and their background, blinking, various shapes of the cursor (block/underline/hidden static/blinking), and loadable fonts (with various glyph sizes). The Linux console traditionally uses hardware VGA-compatible text modes, and the Win32 console environment has an ability to switch the screen to text mode for some text window sizes.");
-//        terminalTask_appendStr("\nSlawomir Pabian") ;
-//        terminalTask_appendStr("elo");
-//        terminalTask_appendStr("linia");
-//        terminalTask_appendStr("testowa linia");
-//        terminalTask_appendStr("kolejna");
         
 //        terminalTask_appendStr("bash.bash_logout");
 //        terminalTask_appendStr("bash.bashrc");
@@ -612,9 +486,5 @@ int main(void)
     }        
 
 
-    
-	SystemCoreClockUpdate();
-	uint32_t a = SystemCoreClock  ;
-//	uint32_t b = 0 ;
     return 0 ;
 }
