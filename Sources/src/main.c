@@ -63,10 +63,6 @@ void enable_spi_interrupt( bool enable )
         NVIC_DisableIRQ(SPI4_IRQn) ;
 }
 
-void set_spi_pending_int(void)
-{
-    NVIC_SetPendingIRQ(SPI4_IRQn) ;
-}
 
 void SPI4_IRQHandler(void)
 {
@@ -445,7 +441,7 @@ int main(void)
 
 #ifdef _TEST_IT_API
         
-        ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, ft801_spi_rd16 );
         
         
         ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
@@ -508,9 +504,8 @@ int main(void)
 #ifdef _TEST_GPU_ENGINE
 
         // init it_api
-        ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
-        // init the gpu_engine api
-        ft80x_gpu_eng_it_init() ;
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, ft801_spi_rd16 );
+
         
         
         // create new task
@@ -574,9 +569,7 @@ int main(void)
 #ifdef _TERMINAL_EXAMPLE
         
         // init it_api
-        ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
-        // init the gpu_engine api
-        ft80x_gpu_eng_it_init() ;
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, ft801_spi_rd16 );
         
         // terminal task
         uint16_t tab_termianl[3] = {0,0,0} ;
@@ -636,10 +629,8 @@ int main(void)
 #ifdef _DEMO_EXAMPLE
           
         // init it_api
-        ft80x_it_api_init( enable_spi, enable_spi_interrupt, set_spi_pending_int, ft801_spi_rd16 );
-        // init the gpu_engine api
-        ft80x_gpu_eng_it_init() ;
-        
+        ft80x_it_api_init( enable_spi, enable_spi_interrupt, ft801_spi_rd16 );
+ 
         
         // demo menu task
         FT80xTask_TypeDef g_demo_menu ;

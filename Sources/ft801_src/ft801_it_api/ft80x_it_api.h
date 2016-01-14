@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "ft80x_it_api_cmd.h"
+#include "ft80x_engine_it.h"        // include the engine of it. API
 
 
 typedef void (*pf_en_TypeDef)( bool ) ;
@@ -20,7 +21,6 @@ bool ft80x_it_check(void);
 void ft80x_it_api_init( 
     pf_en_TypeDef       fptr_spi_en,
     pf_en_TypeDef       fptr_spi_it_en,
-    pf_void_void        fptr_spi_set_pending,
     spi_rd_16_TypeDef   fptr_spi_rd16
 );
 

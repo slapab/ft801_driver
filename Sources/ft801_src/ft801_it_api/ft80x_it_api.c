@@ -11,7 +11,6 @@
 
 
 
-
 struct ft80x_it_api_data_typeDef
 {
     volatile sig_atomic_t m_sendingStatus ;
@@ -163,20 +162,21 @@ bool ft80x_it_check(void)
 void ft80x_it_api_init( 
     pf_en_TypeDef       fptr_spi_en,
     pf_en_TypeDef       fptr_spi_it_en,
-    pf_void_void        fptr_spi_set_pending,
     spi_rd_16_TypeDef   fptr_spi_rd16
 )
 {
     _thisData.mfp_enable_spi = fptr_spi_en ;
     _thisData.mpf_enable_spi_it = fptr_spi_it_en ;
     _thisData.mfp_spi_rd_16bit = fptr_spi_rd16 ;
-    //_thisData.mfp_spi_set_pending_it = fptr_spi_set_pending ;
     
     // Disable NVIC - for this interrupt
     _thisData.mpf_enable_spi_it(false);
     
     // Disable the spi
     _thisData.mfp_enable_spi(false);
+    
+    
+    ft80x_gpu_eng_it_init() ;
     
 }
 
