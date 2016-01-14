@@ -6,7 +6,7 @@
 
 #include "ft80x_engine_it.h"
 #include "ft80x_task.h"
-
+#include "ft80x_it_api.h"       // ft80x_it_check()
 
 
 // Display Task states
@@ -91,6 +91,7 @@ void ft80x_gpu_eng_it_looper(void)
 {
     FT80xTask_TypeDef * curr_task = _thisData.m_currTask ;
     
+    ft80x_it_check() ; // pool the 'sending data' block of API
     
     // do nothing if no task is active
     if ( NULL == curr_task )

@@ -26,13 +26,11 @@
 //#define _EXAMPLE_TAG_TRACK
 //#define _CALIBRATE_TOUCH
 
-//#define _TEST_IT_API
-
-//#define _TEST_GPU_ENGINE
+#define _TEST_GPU_ENGINE
 
 //#define _TERMINAL_EXAMPLE
 
-#define _DEMO_EXAMPLE
+//#define _DEMO_EXAMPLE
 
 
 // Declare the descryptor for ring buffer
@@ -437,70 +435,9 @@ int main(void)
         }
         
 #endif
-       
-
-#ifdef _TEST_IT_API
-        
-        ft80x_it_api_init( enable_spi, enable_spi_interrupt, ft801_spi_rd16 );
-        
-        
-        ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
-        
-        ft801_api_cmd_append_it(CMD_DLSTART) ;
-        ft801_api_cmd_append_it(CLEAR_COLOR_RGB(50, 50, 55));
-        ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
-        ft801_api_cmd_append_it(COLOR_RGB(0,100,250));
-        ft801_api_cmd_text_it(240,136,30,FT_OPT_CENTER,"Slawomir Pabian to jest mistrz ;-)") ;
-
-        ft801_api_cmd_append_it(DISPLAY()) ;
-        ft801_api_cmd_append_it(CMD_SWAP);
-
-        ft801_api_cmd_flush_it();
-
-
-        while ( false == ft80x_it_check() );
-        
-        
-        // the second screen
-        sleep(23) ;
-        sleep(23) ;
-        sleep(23) ;
-        
-        ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
-        
-        ft801_api_cmd_append_it(CMD_DLSTART) ;
-        ft801_api_cmd_append_it(CLEAR_COLOR_RGB(50, 50, 55));
-        ft801_api_cmd_append_it(CLEAR(1, 1, 1)) ;
-        ft801_api_cmd_append_it(COLOR_RGB(50,50,250));
-        ft801_api_cmd_text_it(240,136,30,FT_OPT_CENTER,"Master of masters!") ;
-
-        ft801_api_cmd_append_it(DISPLAY()) ;
-        ft801_api_cmd_append_it(CMD_SWAP);
-
-        ft801_api_cmd_flush_it();
-        
-        while ( false == ft80x_it_check() );
-
-        // try to change the brightness
-//        sleep(23) ;
-//        sleep(23) ;
-//        ft801_api_cmd_prepare_it( FT_RAM_CMD ) ;
-//        
-//        //ft801_api_cmd_append_it(CMD_DLSTART) ;
-//        uint8_t tab[1] = { 1 } ;
-//        ft801_api_cmd_memwrite_it(REG_PWM_DUTY, tab , 1) ;
-//        
-//        //ft801_api_cmd_append_it(DISPLAY()) ;
-//        //ft801_api_cmd_append_it(CMD_SWAP);
-
-//        ft801_api_cmd_flush_it();
-//        
-//        while ( false == ft80x_it_check() );
 
         
-#endif        
-
-
+        
 #ifdef _TEST_GPU_ENGINE
 
         // init it_api
@@ -558,7 +495,6 @@ int main(void)
         
         while(1)
         {
-            ft80x_it_check() ; // pooling the it_api
             ft80x_gpu_eng_it_looper() ; // pooling the gpu_engine
         }
 
@@ -620,7 +556,6 @@ int main(void)
         
         while(1)
         {
-            ft80x_it_check() ; // pooling the it_api
             ft80x_gpu_eng_it_looper() ; // pooling the gpu_engine
         }
         
@@ -669,7 +604,6 @@ int main(void)
         
         while(1)
         {
-            ft80x_it_check() ; // pooling the it_api
             ft80x_gpu_eng_it_looper() ; // pooling the gpu_engine
         }
 #endif // _DEMO_EXAMPLE
